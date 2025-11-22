@@ -122,7 +122,7 @@ Haga cambios en el modelo para tomar en cuenta el hecho de que la población no 
 
 * agregar un término de decremento en $dR$ para tomar en cuenta las personas recuperadas que fallecen $-\mu R$
 
-Usar ahora los paámetros
+Usar ahora los parámetros
 \[
 \begin{aligned}
 \beta  &=  0.4 days^{-1} &= (0.4 \times 365) years^{-1}\\
@@ -175,8 +175,3 @@ Calcule la dinámica de la epidemia en este caso, estudiando cómo cambia la din
 Su modelo debe ser capaz de mostrar que si la fracción $v$ es suficiente, no es necesario vacunar a todos los suceptibles para evitar la epidemia. A este efecto se le conoce como *inmunidad de rebaño* y se refiere a que si un sector grande de la población es inmune, entonces los contagios se mantienen a un nivel en el que la enfermedad es eliminada.
 
 ¿Cómo se puede calcular la fracción mínima $v$ de personas que se deben vacunar para poder evitar una epidemia? La inmunidad de rebaño ocurre cuando $R_{eff}< 1$. 
-
-```{r}
-write.csv(output, "output.csv", row.names = TRUE)
-```
-
