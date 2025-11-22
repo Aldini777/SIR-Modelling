@@ -1,0 +1,394 @@
+Reto: Modelo SIR y Vacunación
+================
+Aldo Resendiz
+Noviembre de 2025
+
+- [El modelo SIR](#el-modelo-sir)
+- [Gráficos de la evolución del
+  sistema](#gráficos-de-la-evolución-del-sistema)
+- [Pregunta 1](#pregunta-1)
+- [Pregunta 2](#pregunta-2)
+- [Pregunta 3](#pregunta-3)
+- [Pregunta 4](#pregunta-4)
+
+## El modelo SIR
+
+Consideremos un modelo para describir la dinámica de un grupo de
+individuos de una población con exposición a una enfermedad que puede
+contagiarse entre los miembros de la población. Esto puede modelarse
+como un sistema dinámico denominado $`SIR`$ para una población de $`N`$
+individuos en la que se considera la interacción entre un conjunto de
+$`S`$ individuos *suceptibles* de contraer la enfermedad, un conjunto
+$`I`$ de individuos *infectados* y uno conjunto $`R`$ de individuos
+*recuperados* de la enfermedad.
+
+Este modelo tiene los siguientes supuestos:
+
+- la probabilidades de infectarse son iguales para todos los individuos
+  de la población;
+
+- la población es homogénea, es decir que los riesgos de infectarse son
+  iguales para toos los suceptibles y que los tiempos para recuperarse
+  son iguales para todos los infectados; y
+
+- el tamaño $`N`$ de la población es constante.
+
+El modelo maneja los diferentes conjuntos $`S`$, $`I`$ y $`R`$ como si
+fueran compartimentos bien separados y considera que los individuos
+pueden pasr de uno a otro en el caso de que se enfermen (cambio
+$`S\rightarrow I`$) o que una vez enfermos se recuperen (cambio
+$`I\rightarrow`$). Ademas, se asume que un individuo no puede pasar del
+conjunto de suceptibles directamente al conjunto de recuperados.
+
+Con estos supuestos y consideraciones, las ecuaciones diferenciales del
+modelo SIR son:
+``` math
+
+\begin{aligned}
+\frac{dS}{dt}&= -\beta \frac{I}{N} S\\
+\frac{dI}{dt}&= \beta\frac{I}{N}S-\gamma I\\\
+\frac{dR}{dt}&= \gamma I
+\end{aligned}
+```
+donde:
+
+- N=S+R+I
+
+- la cantidad $`\beta\frac{I}{N}`$ representa la razón con que las
+  personas salen del compartimento S (se infectan);
+
+- en la primera ecuación $`dS`$ representa el cambio debido a las
+  personas que salen del compartimento $`S`$ (el signo negativo se debe
+  a que las personas salen)
+
+- en la segunda ecuación $`dI`$ representa el cambio debido a las
+  personas que salen del compartimento $`I`$ (una parte se debe a las
+  personas que del compartimento $`S`$ pasan al compartimento $`I`$, y
+  otra parte se debe a las personas que salen del compartimento $`I`$
+  porque se recuperan);
+
+- la cantidad $`\gamma`$ representa la razón con que las personas se
+  recuperan.
+
+``` r
+# PACKAGES:
+library(deSolve)
+library(reshape2)
+library(ggplot2)
+
+initial_state_values <- c(S = 999999, I = 1, R = 0)
+parameters <- c(beta = 1, gamma = 0.1)
+times <- seq(from = 0, to = 60, by = 1)   
+
+sir_model <- function(time, state, parameters) {  
+    with(as.list(c(state, parameters)), {
+        N <- S+I+R 
+        lambda <- beta * I/N
+        dS <- -lambda * S                
+        dI <- lambda * S - gamma * I   
+        dR <- gamma * I                  
+        return(list(c(dS, dI, dR))) 
+    })
+}
+
+output <- as.data.frame(ode(y = initial_state_values, 
+                            times = times, 
+                            func = sir_model,
+                            parms = parameters))
+```
+
+## Gráficos de la evolución del sistema
+
+``` r
+# Gráfico del modelo base
+output_long <- melt(as.data.frame(output), id = "time")                  
+
+ggplot(data = output_long, aes(x = time, y = value, colour = variable)) +  
+  geom_line(linewidth = 1) +                                           
+  xlab("Tiempo (días)")+                                         
+  ylab("Número de individuos") +                                       
+  labs(title = "Modelo SIR Básico", colour = "Subconjunto") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+![](Reto_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+
+Con el modelo SIR se define la constante
+``` math
+R_0=\frac{\beta}{\gamma}
+```
+que representa el número de personas que cada contagiado infecta. Para
+que la enfermedad analizada logre dispararse en forma de una epidemia
+debe cumplirse que $`R_0 > 1`$.
+
+También se define
+``` math
+R_{eff}=R_0\frac{S}{N}
+```
+que corresponde al número promedio de personas que cada contagiado
+infecta. Este segundo valor $`R_{eff}`$ toma en cuenta de que durante la
+evolución de la pandemia, al aumentar del número de personas inmunes en
+la población cada persona contagiada infectará a un número de personas
+cada vez menor.
+
+## Pregunta 1
+
+Haga cambios en el modelo para tomar en cuenta el hecho de que la
+población no es constante:
+
+- agregar un término de incremento en $`dS`$ para tomar en cuenta los
+  individuos nacidos $`+bN`$
+
+- agregar un término de decremento en $`dS`$ para tomar en cuenta las
+  personas susceptibles que mueren -$`\mu S`$
+
+- agregar un término de decremento en $`dI`$ para tomar en cuenta las
+  personas infectadas que mueren -$`\mu I`$
+
+- agregar un término de decremento en $`dR`$ para tomar en cuenta las
+  personas recuperadas que fallecen $`-\mu R`$
+
+Usar ahora los parámetros
+``` math
+
+\begin{aligned}
+\beta  &=  0.4 days^{-1} &= (0.4 \times 365) years^{-1}\\
+\gamma &=  0.2 days^{-1} &= (0.2 \times 365) years^{-1}\\
+\mu    &=  \frac{1}{70}years^{-1}\\
+b     &=  \frac{1}{70}years^{-1}\\
+\end{aligned}
+```
+y considerar una duración de 1 año.
+
+``` r
+# Conversión de unidades a días
+mu_val <- (1/70)/365
+b_val  <- (1/70)/365
+
+parameters_p1 <- c(beta = 0.4, gamma = 0.2, mu = mu_val, b = b_val)
+times_p1 <- seq(0, 365, by = 1) # 1 año
+
+# Función SIR con dinámica vital
+sir_vital_dynamics <- function(time, state, parameters) {
+  with(as.list(c(state, parameters)), {
+    N <- S + I + R
+    lambda <- beta * I / N
+    
+    # Ecuaciones modificadas
+    dS <- b * N - lambda * S - mu * S
+    dI <- lambda * S - gamma * I - mu * I
+    dR <- gamma * I - mu * R
+    
+    return(list(c(dS, dI, dR)))
+  })
+}
+
+output_p1 <- as.data.frame(ode(y = initial_state_values, times = times_p1, func = sir_vital_dynamics, parms = parameters_p1))
+
+# Gráfico
+ggplot(melt(output_p1, id="time"), aes(x=time, y=value, col=variable)) +
+  geom_line(linewidth=1) +
+  theme_minimal() +
+  labs(title = "Modelo con Dinámica Vital (1 año)", y="Población")
+```
+
+![](Reto_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+
+## Pregunta 2
+
+Considerando el modelo SIR básico, haga cambios para tomar en cuenta un
+programa de vacunación. Suponga que una fracción $`v`$ de susceptibles
+se vacuna de manera que queda inmune (y entra ahora directamente en el
+conjunto de los recuperados). Calcule la dinámica de la epidemia en este
+caso usando los parámetros $`\beta=0.4`$, $`\gamma=0.1`$ y considere un
+periodo de 2 años.
+
+Su modelo debe ser capaz de mostrar que si la fracción $`v`$ es
+suficiente, no es necesario vacunar a todos los suceptibles para evitar
+la epidemia. A este efecto se le conoce como *inmunidad de rebaño* y se
+refiere a que si un sector grande de la población es inmune, entonces
+los contagios se mantienen a un nivel en el que la enfermedad es
+eliminada.
+
+¿Cómo se puede calcular la fracción mínima $`v`$ de personas que se
+deben vacunar para poder evitar una epidemia? La inmunidad de rebaño
+ocurre cuando $`R_{eff}< 1`$.
+
+``` r
+# Parámetros
+N_total <- 1000000
+v <- 0.8 # 80% vacunados
+
+# Condiciones iniciales modificadas por la vacuna
+# Los vacunados pasan directo a Recuperados (o un compartimento V)
+init_vaccine <- c(S = (1 - v) * N_total - 1, 
+                  I = 1, 
+                  R = v * N_total)
+
+params_vaccine <- c(beta = 0.4, gamma = 0.1)
+times_vaccine <- seq(0, 365*2, by = 1) # 2 años
+
+output_vaccine <- as.data.frame(ode(y = init_vaccine, times = times_vaccine, func = sir_model, parms = params_vaccine))
+
+ggplot(melt(output_vaccine, id="time"), aes(x=time, y=value, col=variable)) +
+  geom_line(linewidth=1) +
+  theme_minimal() +
+  labs(title = "Efecto de Vacunación (80% población)", subtitle = "Notar que infectados (I) no crece exponencialmente")
+```
+
+![](Reto_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+
+## Pregunta 3
+
+Haga cambios en el modelo para tomar en cuenta de que la población no es
+constante:
+
+- agregar un término de incremento en $`dS`$ para tomar en cuenta los
+  nacidos $`+bN`$
+
+- agregar un término de decremento en $`dS`$ para tomar en cuenta las
+  personas susceptibles que mueren -$`\mu S`$
+
+- agregar un término de decremento en $`dI`$ para tomar en cuenta las
+  personas infectadas que mueren -$`\mu I`$
+
+- agregar un término de decremento en $`dR`$ para tomar en cuenta las
+  personas recuperadas que fallecen $`-\mu R`$
+
+Use los parámetros
+``` math
+
+\begin{aligned}
+\beta  &=  0.4 days^{-1} &= (0.4 \times 365) years^{-1}\\
+\gamma &=  0.2 days^{-1} &= (0.2 \times 365) years^{-1}\\
+\mu    &=  \frac{1}{70}years^{-1}\\
+b     &=  \frac{1}{70}years^{-1}\\
+\end{aligned}
+```
+y considere una duración de 400 años en sus cálculos.
+
+``` r
+times_long <- seq(0, 365*400, by = 10) # 400 años, paso de 10 días para rapidez
+
+output_longterm <- as.data.frame(ode(y = initial_state_values, times = times_long, func = sir_vital_dynamics, parms = parameters_p1))
+```
+
+    ## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
+    ##       such that in the machine, T + H = T on the next step  
+    ##      (H = step size). Solver will continue anyway.
+    ## In above message, R1 = 39641.5, R2 = 3.51711e-12
+    ##  
+    ## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
+    ##       such that in the machine, T + H = T on the next step  
+    ##      (H = step size). Solver will continue anyway.
+    ## In above message, R1 = 39641.5, R2 = 3.51711e-12
+    ##  
+    ## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
+    ##       such that in the machine, T + H = T on the next step  
+    ##      (H = step size). Solver will continue anyway.
+    ## In above message, R1 = 39641.5, R2 = 3.51711e-12
+    ##  
+    ## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
+    ##       such that in the machine, T + H = T on the next step  
+    ##      (H = step size). Solver will continue anyway.
+    ## In above message, R1 = 39641.5, R2 = 2.85728e-12
+    ##  
+    ## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
+    ##       such that in the machine, T + H = T on the next step  
+    ##      (H = step size). Solver will continue anyway.
+    ## In above message, R1 = 39641.5, R2 = 2.85728e-12
+    ##  
+    ## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
+    ##       such that in the machine, T + H = T on the next step  
+    ##      (H = step size). Solver will continue anyway.
+    ## In above message, R1 = 39641.5, R2 = 2.85728e-12
+    ##  
+    ## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
+    ##       such that in the machine, T + H = T on the next step  
+    ##      (H = step size). Solver will continue anyway.
+    ## In above message, R1 = 39641.5, R2 = 2.37424e-12
+    ##  
+    ## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
+    ##       such that in the machine, T + H = T on the next step  
+    ##      (H = step size). Solver will continue anyway.
+    ## In above message, R1 = 39641.5, R2 = 2.37424e-12
+    ##  
+    ## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
+    ##       such that in the machine, T + H = T on the next step  
+    ##      (H = step size). Solver will continue anyway.
+    ## In above message, R1 = 39641.5, R2 = 2.37424e-12
+    ##  
+    ## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
+    ##       such that in the machine, T + H = T on the next step  
+    ##      (H = step size). Solver will continue anyway.
+    ## In above message, R1 = 39641.5, R2 = 1.89233e-12
+    ##  
+    ## DLSODA-  Above warning has been issued I1 times.  
+    ##      It will not be issued again for this problem.
+    ## In above message, I1 = 10
+    ##  
+    ## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
+    ##       taken on this call before reaching TOUT     
+    ## In above message, I1 = 5000
+    ##  
+    ## In above message, R1 = 39641.5
+    ## 
+
+``` r
+ggplot(melt(output_longterm, id="time"), aes(x=time/365, y=value, col=variable)) +
+  geom_line(linewidth=1) +
+  theme_minimal() +
+  labs(title = "Dinámica a Largo Plazo (400 años)", x = "Tiempo (Años)")
+```
+
+![](Reto_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+
+## Pregunta 4
+
+Considerando el modelo SIR básico, haga cambios para tomar en cuenta un
+programa de vacunación. Suponga que una fracción $`v`$ de susceptibles
+se vacuna de manera que queda inmune (y entra ahora directamente en el
+conjunto de los recuperados), mientras que la fracción $`(1-v)`$ sigue
+siendo susceptible.
+
+Calcule la dinámica de la epidemia en este caso, estudiando cómo cambia
+la dinámica variando la fracción $`v`$. Utilice $`\beta=0.6`$,
+$`\gamma=0.1`$ y considere un periodo de 2 años.
+
+Su modelo debe ser capaz de mostrar que si la fracción $`v`$ es
+suficiente, no es necesario vacunar a todos los suceptibles para evitar
+la epidemia. A este efecto se le conoce como *inmunidad de rebaño* y se
+refiere a que si un sector grande de la población es inmune, entonces
+los contagios se mantienen a un nivel en el que la enfermedad es
+eliminada.
+
+¿Cómo se puede calcular la fracción mínima $`v`$ de personas que se
+deben vacunar para poder evitar una epidemia? La inmunidad de rebaño
+ocurre cuando $`R_{eff}< 1`$.
+
+``` r
+params_p4 <- c(beta=0.6, gamma=0.1)
+times_p4 <- seq(0, 365*2, 1)
+v_scenarios <- c(0, 0.5, 0.9)
+
+results_list <- list()
+
+for(v in v_scenarios){
+  y_init <- c(S = (1-v)*N_total - 1, I=1, R=v*N_total)
+  out <- as.data.frame(ode(y=y_init, times=times_p4, func=sir_model, parms=params_p4))
+  out$vacunacion <- paste0(v*100, "%")
+  results_list[[length(results_list)+1]] <- out
+}
+
+all_results <- do.call(rbind, results_list)
+
+# Graficamos SOLO los infectados para comparar
+ggplot(all_results, aes(x=time, y=I, color=vacunacion)) +
+  geom_line(linewidth=1) +
+  theme_minimal() +
+  labs(title = "Comparación de Infectados según % de Vacunación", 
+       y = "Número de Infectados Activos")
+```
+
+![](Reto_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
