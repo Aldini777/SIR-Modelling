@@ -43,6 +43,6 @@ Con el fin de generar una solución de complejidad creciente, este proyecto se d
 
 ---
 
-## 📊 Visualización de Resultados
+##  Visualización de Resultados
 
 Para ver los gráficos y el análisis del código renderizado directamente en GitHub, por favor abre los archivos con extensión `.md` (por ejemplo, `Reto.md`) en este repositorio.
