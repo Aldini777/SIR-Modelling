@@ -1,5 +1,5 @@
 ---
-title: "Reto: Modelo SIR y Vacunación"
+title: "Reto: Modelo SIR y Vacunación Parte 2"
 author: "Aldo Resendiz"
 date: "Noviembre de 2025"
 output: 

@@ -1,4 +1,4 @@
-Reto: Modelo SIR y Vacunación
+Reto: Modelo SIR y Vacunación Parte 2
 ================
 Aldo Resendiz
 Noviembre de 2025
@@ -112,7 +112,7 @@ ggplot(data = output_long, aes(x = time, y = value, colour = variable)) +
   theme(legend.position = "bottom")
 ```
 
-![](Reto_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
 
 Con el modelo SIR se define la constante
 ``` math
@@ -193,7 +193,7 @@ ggplot(melt(output_p1, id="time"), aes(x=time, y=value, col=variable)) +
   labs(title = "Modelo con Dinámica Vital (1 año)", y="Población")
 ```
 
-![](Reto_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
 
 ## Pregunta 2
 
@@ -237,7 +237,7 @@ ggplot(melt(output_vaccine, id="time"), aes(x=time, y=value, col=variable)) +
   labs(title = "Efecto de Vacunación (80% población)", subtitle = "Notar que infectados (I) no crece exponencialmente")
 ```
 
-![](Reto_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
 ## Pregunta 3
 
@@ -342,7 +342,7 @@ ggplot(melt(output_longterm, id="time"), aes(x=time/365, y=value, col=variable))
   labs(title = "Dinámica a Largo Plazo (400 años)", x = "Tiempo (Años)")
 ```
 
-![](Reto_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
 ## Pregunta 4
 
@@ -391,4 +391,4 @@ ggplot(all_results, aes(x=time, y=I, color=vacunacion)) +
        y = "Número de Infectados Activos")
 ```
 
-![](Reto_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
