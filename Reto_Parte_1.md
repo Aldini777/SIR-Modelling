@@ -7,6 +7,7 @@ Noviembre de 2025
 - [El modelo SIR](#el-modelo-sir)
 - [Gráficos de la evolución del
   sistema](#gráficos-de-la-evolución-del-sistema)
+- [Pregunta 1](#pregunta-1)
 - [Pregunta 2 Reducción de
   Susceptibles](#pregunta-2-reducción-de-susceptibles)
   - [Solución Analítica: Pregunta 2](#solución-analítica-pregunta-2)
@@ -43,8 +44,8 @@ El modelo maneja los diferentes conjuntos $`S`$, $`I`$ y $`R`$ como si
 fueran compartimentos bien separados y considera que los individuos
 pueden pasr de uno a otro en el caso de que se enfermen (cambio
 $`S\rightarrow I`$) o que una vez enfermos se recuperen (cambio
-$`I\rightarrow`$). Ademas, se asume que un individuo no puede pasar del
-conjunto de suceptibles directamente al conjunto de recuperados.
+$`I\rightarrow R`$). Ademas, se asume que un individuo no puede pasar
+del conjunto de suceptibles directamente al conjunto de recuperados.
 
 Con estos supuestos y consideraciones, las ecuaciones diferenciales del
 modelo SIR son:
@@ -118,9 +119,29 @@ ggplot(data = output_long, aes(x = time, y = value, colour = variable)) +
   theme(legend.position = "bottom")
 ```
 
-![](Reto_Parte_1_files/figure-gfm/unnamed-chunk-2-1.png)<!-- --> \##
-Pregunta 1 Analizando el dataframe “output” encuentre el día en que el
-número de contagios es máximo.
+![](Reto_Parte_1_files/figure-gfm/unnamed-chunk-2-1.png)<!-- --> Con el
+modelo SIR se define la constante
+``` math
+R_0=\frac{\beta}{\gamma}
+```
+que representa el número de personas que cada contagiado infecta. Para
+que la enfermedad analizada logre dispararse en forma de una epidemia
+debe cumplirse que $`R_0 > 1`$.
+
+También se define
+``` math
+R_{eff}=R_0\frac{S}{N}
+```
+que corresponde al número promedio de personas que cada contagiado
+infecta. Este segundo valor $`R_{eff}`$ toma en cuenta de que durante la
+evolución de la pandemia, al aumentar del número de personas inmunes en
+la población cada persona contagiada infectará a un número de personas
+cada vez menor.
+
+## Pregunta 1
+
+Analizando el dataframe “output” encuentre el día en que el número de
+contagios es máximo.
 
 ``` r
 # Encontrar la fila con el valor máximo de infectados (I)

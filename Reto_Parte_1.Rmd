@@ -23,7 +23,7 @@ Este modelo tiene los siguientes supuestos:
 
 * el tamaño $N$ de la población es constante.
 
-El modelo maneja los diferentes conjuntos $S$, $I$ y $R$ como si fueran compartimentos bien separados y considera que los individuos pueden pasr de uno a otro en el caso de que se enfermen (cambio $S\rightarrow I$) o que una vez enfermos se recuperen (cambio $I\rightarrow$). Ademas, se asume que un individuo no puede pasar del conjunto de suceptibles directamente al conjunto de recuperados.
+El modelo maneja los diferentes conjuntos $S$, $I$ y $R$ como si fueran compartimentos bien separados y considera que los individuos pueden pasr de uno a otro en el caso de que se enfermen (cambio $S\rightarrow I$) o que una vez enfermos se recuperen (cambio $I\rightarrow R$). Ademas, se asume que un individuo no puede pasar del conjunto de suceptibles directamente al conjunto de recuperados.
 
 Con estos supuestos y consideraciones, las ecuaciones diferenciales del modelo SIR son:
 \[
@@ -89,6 +89,14 @@ ggplot(data = output_long, aes(x = time, y = value, colour = variable)) +
   theme(legend.position = "bottom")
 
 ```
+Con el modelo SIR se define la constante 
+\[R_0=\frac{\beta}{\gamma}\]
+que representa el número de personas que cada contagiado infecta. Para que la enfermedad analizada logre dispararse en forma de una epidemia debe cumplirse que $R_0 > 1$. 
+
+También se define 
+\[R_{eff}=R_0\frac{S}{N}\]
+que corresponde al número promedio de personas que cada contagiado infecta. Este segundo valor $R_{eff}$ toma en cuenta de que durante la evolución de la pandemia, al aumentar del número de personas inmunes en la población cada persona contagiada infectará a un número de personas cada vez menor. 
+
 ## Pregunta 1
 Analizando el dataframe "output" encuentre el día en que el número de contagios es máximo.
 
