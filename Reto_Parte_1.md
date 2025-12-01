@@ -1,14 +1,21 @@
 Reto: Modelo SIR y Vacunación Parte 1
 ================
-Aldo Resendiz
+Aldo Resendiz Cravioto, Aldo Radamés Corral Verdugo, Virginia Díaz
+Moreno.
 Noviembre de 2025
 
 - [El modelo SIR](#el-modelo-sir)
 - [Gráficos de la evolución del
   sistema](#gráficos-de-la-evolución-del-sistema)
-- [Pregunta 1](#pregunta-1)
 - [Pregunta 2 Reducción de
   Susceptibles](#pregunta-2-reducción-de-susceptibles)
+  - [Solución Analítica: Pregunta 2](#solución-analítica-pregunta-2)
+- [Pregunta 3 Variación de $`\beta`$ (Fuerza de
+  infección)](#pregunta-3-variación-de-beta-fuerza-de-infección)
+- [Pregunta 4 Variación de $`\gamma`$
+  (Recuperación)](#pregunta-4-variación-de-gamma-recuperación)
+  - [Análisis de la variabilidad de
+    $`\gamma`$](#análisis-de-la-variabilidad-de-gamma)
 
 ## El modelo SIR
 
@@ -111,30 +118,9 @@ ggplot(data = output_long, aes(x = time, y = value, colour = variable)) +
   theme(legend.position = "bottom")
 ```
 
-![](Reto_Parte_1_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
-
-Con el modelo SIR se define la constante
-``` math
-R_0=\frac{\beta}{\gamma}
-```
-que representa el número de personas que cada contagiado infecta. Para
-que la enfermedad analizada logre dispararse en forma de una epidemia
-debe cumplirse que $`R_0 > 1`$.
-
-También se define
-``` math
-R_{eff}=R_0\frac{S}{N}
-```
-que corresponde al número promedio de personas que cada contagiado
-infecta. Este segundo valor $`R_{eff}`$ toma en cuenta de que durante la
-evolución de la pandemia, al aumentar del número de personas inmunes en
-la población cada persona contagiada infectará a un número de personas
-cada vez menor.
-
-## Pregunta 1
-
-Analizando el dataframe “output” encuentre el día en que el número de
-contagios es máximo.
+![](Reto_Parte_1_files/figure-gfm/unnamed-chunk-2-1.png)<!-- --> \##
+Pregunta 1 Analizando el dataframe “output” encuentre el día en que el
+número de contagios es máximo.
 
 ``` r
 # Encontrar la fila con el valor máximo de infectados (I)
@@ -164,17 +150,23 @@ Entonces:
 ``` math
  0 = I \left( \beta \frac{S}{N} - \gamma \right) 
 ```
-Como $`I \neq 0`$, debemos tener:
+Para que esta multiplicación sea igual a cero, hay dos
+opciones:$`I = 0`$: Esto significaría que no hay infectados (lo cual es
+el inicio o el fin de la epidemia, pero no el
+pico).$`\left( \beta \frac{S}{N} - \gamma \right) = 0`$: Esta es la
+condición que ocurre justo en el pico de la curva. Como $`I \neq 0`$,
+debemos tener:
 ``` math
  \beta \frac{S}{N} = \gamma \implies S = \frac{\gamma}{\beta} N 
 ```
-O equivalentemente, usando el número reproductivo básico
-$`R_0 = \beta / \gamma`$:
-``` math
- S_{pico} = \frac{N}{R_0} 
-```
-Esto significa que el pico ocurre exactamente cuando la población
-susceptible $`S`$ cae hasta alcanzar el umbral $`N/R_0`$.
+Sin embargo, si los valores de $`\gamma`$ y $`\beta`$ cambian, se verá
+afectada la curva por lo que el punto máximo cambiará
+
+**Interpretación:** El máximo de contagios ocurre exactamente cuando el
+número de susceptibles ($`S`$) cae hasta el nivel
+$`\frac{\gamma}{\beta}N`$. A partir de este momento, como $`S`$ sigue
+disminuyendo, la tasa de recuperación supera a la de infección y la
+curva comienza a bajar.
 
 ## Pregunta 2 Reducción de Susceptibles
 
@@ -199,31 +191,81 @@ cat("Valor de S en ese día:", round(fila_mitad$S))
 
     ## Valor de S en ese día: 353135
 
-Fórmula analítica (Aproximación SI): Si asumimos que al inicio la
-epidemia crece muy rápido y ignoramos momentáneamente la recuperación
-(comportamiento tipo logístico $`SI`$), la ecuación para $`S`$ es
-aproximadamente:
+### Solución Analítica: Pregunta 2
+
+**Objetivo:** Encontrar una fórmula analítica para el tiempo $`t`$
+necesario para que el número de susceptibles ($`S`$) se reduzca a la
+mitad de su valor inicial ($`S_0/2`$), en función del parámetro
+$`\beta`$.
+
+**1. Planteamiento de la Ecuación** Partimos de la ecuación diferencial
+para los susceptibles del modelo SIR:
 ``` math
- \frac{dS}{dt} \approx -\beta \frac{S(N-S)}{N} 
+\frac{dS}{dt} = -\beta \frac{I}{N} S
 ```
-La solución analítica para $`S(t)`$ es la curva logística inversa:
+
+**2. Aproximación del Modelo (Reducción a SI)** Para resolver
+analíticamente, asumimos que en esta fase inicial el número de
+recuperados es despreciable, por lo que la población se conserva como
+$`N \approx S + I`$. Esto nos permite expresar $`I`$ en términos de
+$`S`$:
 ``` math
- S(t) = \frac{N}{1 + \frac{I_0}{S_0} e^{\beta t}} 
+I = N - S
 ```
-Queremos hallar $`t`$ cuando $`S(t) = N/2`$. Sustituimos y despejamos:
+
+Sustituyendo en la ecuación diferencial:
 ``` math
- \frac{N}{2} = \frac{N}{1 + \frac{I_0}{S_0} e^{\beta t}} \implies 2 = 1 + \frac{I_0}{S_0} e^{\beta t} \implies 1 = \frac{I_0}{S_0} e^{\beta t} 
+\frac{dS}{dt} = -\frac{\beta}{N} (N - S) S
 ```
-Tomando logaritmo natural:
+
+**3. Integración** Separamos las variables ($`S`$ a la izquierda, $`t`$
+a la derecha) e integramos usando fracciones parciales:
 ``` math
- \ln(1) = \ln\left(\frac{I_0}{S_0}\right) + \beta t \implies 0 = \ln(I_0) - \ln(S_0) + \beta t 
+\int \frac{1}{S(N-S)} dS = \int -\frac{\beta}{N} dt
 ```
+
 ``` math
- t = \frac{\ln(S_0) - \ln(I_0)}{\beta} 
+\frac{1}{N} \ln\left( \frac{S}{N-S} \right) = -\frac{\beta}{N} t + C
 ```
-\## Pregunta 3 Variación de $`\beta`$ (Fuerza de infección) Estudiamos
-la dinámica manteniendo $`\gamma = 0.1`$ y variando $`\beta`$.Valores de
-$`\beta`$: 0.1, 0.3, 0.7, 0.9, 1.2.
+
+Multiplicando por $`N`$, obtenemos la solución general (Ecuación
+Logística):
+``` math
+\ln\left( \frac{S}{N-S} \right) = -\beta t + C'
+```
+
+**4. Condiciones Iniciales y Resolución** \* **Al tiempo $`t=0`$:**
+Asumimos $`S_0 \approx N`$ y un número muy pequeño de infectados $`I_0`$
+(ej. 1). La constante de integración resulta $`C' \approx \ln(N)`$. \*
+**Condición objetivo:** Buscamos el tiempo $`t`$ cuando
+$`S = S_0 / 2 \approx N/2`$.
+
+Sustituyendo $`S = N/2`$ en la ecuación:
+``` math
+\ln\left( \frac{N/2}{N - N/2} \right) = -\beta t + \ln(N)
+```
+
+El término del logaritmo se simplifica a $`\ln(1)`$, que es 0:
+``` math
+0 = -\beta t + \ln(N)
+```
+
+**5. Fórmula Final** Despejamos $`t`$:
+
+``` math
+t = \frac{\ln(N)}{\beta}
+```
+
+> **Interpretación:** Bajo el supuesto de una población inicialmente
+> casi totalmente susceptible, el tiempo que tarda la enfermedad en
+> infectar a la mitad de la población es inversamente proporcional a la
+> tasa de transmisión $`\beta`$ y proporcional al logaritmo del tamaño
+> de la población.
+
+## Pregunta 3 Variación de $`\beta`$ (Fuerza de infección)
+
+Estudiamos la dinámica manteniendo $`\gamma = 0.1`$ y variando
+$`\beta`$.Valores de $`\beta`$: 0.1, 0.3, 0.7, 0.9, 1.2.
 
 ``` r
 betas <- c(0.1, 0.3, 0.7, 0.9, 1.2)
@@ -247,16 +289,47 @@ ggplot(data_p3, aes(x=time, y=I, color=beta)) +
 ```
 
 ![](Reto_Parte_1_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
-*Relación necesaria*: Para que ocurra epidemia ($`dI/dt > 0`$ al
-inicio), se necesita que $`\beta > \gamma`$.Esto define el Número
-Reproductivo Básico: $`R_0 = \frac{\beta}{\gamma} > 1`$.En la gráfica,
-para $`\beta=0.1`$ (donde $`\beta = \gamma`$), la curva es plana o
-decrece (no hay epidemia). A medida que $`\beta`$ aumenta, el pico es
-más alto y ocurre más pronto.
 
-\##Pregunta 4 Variación de $`\gamma`$ (Recuperación) Estudiamos la
-dinámica manteniendo $`\beta = 1`$ y variando $`\gamma`$.Valores de
-$`\gamma`$: 0.025, 0.2, 0.5, 1.
+``` r
+ggplot(data_p3, aes(x=time, y=S, color=beta)) +
+  geom_line(size=1) +
+  labs(title = "Dinámica de Susceptibles (S)", 
+       subtitle = "Variando Beta con Gamma = 0.1",
+       y = "Población Susceptible", 
+       x = "Tiempo (días)",
+       color = "Beta") +
+  theme_minimal()
+```
+
+![](Reto_Parte_1_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+
+``` r
+ggplot(data_p3, aes(x=time, y=R, color=beta)) +
+  geom_line(size=1) +
+  labs(title = "Dinámica de Recuperados (R)", 
+       subtitle = "Variando Beta con Gamma = 0.1",
+       y = "Población Recuperada", 
+       x = "Tiempo (días)",
+       color = "Beta") +
+  theme_minimal()
+```
+
+![](Reto_Parte_1_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+
+Se observa que con una fuerza de infección $`\beta \le 0.1`$, no ocurre
+ninguna propagación efectiva de la enfermedad. Para que inicie un brote,
+el valor de $`\beta`$ debe encontrarse en el rango
+$`0.1 < \beta \le 0.3`$. Sin embargo, para que se desarrolle una
+**epidemia significativa**, es necesario que $`\beta`$ sea mayor a
+$`0.7`$, sin importar la duración de la simulación. Por otra parte, con
+valores aún mayores (p. ej. $`\beta = 1.2`$), la infección se propaga
+con tal velocidad que el sistema alcanza su estado estable mucho más
+rápido.
+
+## Pregunta 4 Variación de $`\gamma`$ (Recuperación)
+
+Estudiamos la dinámica manteniendo $`\beta = 1`$ y variando
+$`\gamma`$.Valores de $`\gamma`$: 0.025, 0.2, 0.5, 1.
 
 ``` r
 beta_fijo <- 1
@@ -279,10 +352,65 @@ ggplot(data_p4, aes(x=time, y=I, color=gamma)) +
   theme_minimal()
 ```
 
-![](Reto_Parte_1_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
-*Análisis*: Al aumentar $`\gamma`$ (recuperación más rápida), el pico de
-infectados disminuye.Si $`\gamma = 1`$, entonces $`\beta = \gamma`$ y
-$`R_0 = 1`$. En este caso (línea correspondiente a 1), no se observa un
-brote epidémico significativo.Nuevamente se confirma que para que exista
-una epidemia, la tasa de recuperación debe ser suficientemente baja
-comparada con la de infección: $`\gamma < \beta`$.
+![](Reto_Parte_1_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+
+``` r
+ggplot(data_p4, aes(x=time, y=S, color=gamma)) +
+  geom_line(size=1) +
+  labs(title = "Dinámica de Susceptibles (S)", 
+       subtitle = "Variando Gamma con Beta = 1",
+       y = "Población Susceptible", 
+       x = "Tiempo (días)",
+       color = "Gamma") +
+  theme_minimal()
+```
+
+![](Reto_Parte_1_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+
+``` r
+ggplot(data_p4, aes(x=time, y=R, color=gamma)) +
+  geom_line(size=1) +
+  labs(title = "Dinámica de Recuperados (R)", 
+       subtitle = "Variando Gamma con Beta = 1",
+       y = "Población Recuperada", 
+       x = "Tiempo (días)",
+       color = "Gamma") +
+  theme_minimal()
+```
+
+![](Reto_Parte_1_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+
+### Análisis de la variabilidad de $`\gamma`$
+
+Al analizar las gráficas, se observa claramente una relación inversa
+entre la tasa de recuperación $`\gamma`$ y el alcance de la enfermedad:
+mientras menor es $`\gamma`$ (lo que implica un tiempo de enfermedad más
+largo), mayor es el número de personas infectadas.
+
+Particularmente, en el escenario donde $`\gamma = 1`$ (siendo
+$`\beta = 1`$), notamos que **no ocurre una epidemia**. Esto sucede
+porque los individuos se recuperan tan rápido que la enfermedad no logra
+propagarse eficazmente. De esto podemos inferir la condición necesaria
+para el brote:
+
+``` math
+\beta > \gamma \iff \frac{\beta}{\gamma} > 1
+```
+
+Esto indica que la enfermedad solo se propagará si la **tasa de
+transmisión** es mayor que la **tasa de recuperación**. A este cociente
+se le conoce como **Número Reproductivo Básico ($`R_0`$)**, el cual
+representa el promedio de nuevas infecciones generadas por un solo
+individuo infectado durante su periodo contagioso:
+
+``` math
+R_0 = \frac{\beta}{\gamma}
+```
+
+Basándonos en este parámetro, podemos concluir: \* **Si $`R_0 > 1`$:**
+La epidemia crece. Cada individuo infecta, en promedio, a más de una
+persona, permitiendo la expansión del patógeno. \* **Si $`R_0 = 1`$:**
+La enfermedad se vuelve endémica o estable; cada infectado es
+reemplazado por otro, sin crecimiento exponencial. \* **Si
+$`R_0 < 1`$:** La epidemia se extingue. Cada persona infecta a menos de
+un individuo en promedio, causando que el brote decaiga rápidamente.
