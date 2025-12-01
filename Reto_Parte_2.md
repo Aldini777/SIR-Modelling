@@ -1,12 +1,14 @@
 Reto: Modelo SIR y Vacunación Parte 2
 ================
-Aldo Resendiz
+Aldo Resendiz, Aldo Radamés Corral Verdugo, Virginia Díaz Moreno.
 Noviembre de 2025
 
 - [El modelo SIR](#el-modelo-sir)
 - [Gráficos de la evolución del
   sistema](#gráficos-de-la-evolución-del-sistema)
 - [Pregunta 1](#pregunta-1)
+  - [Análisis de Resultados: Modelo con Dinámica
+    Vital](#análisis-de-resultados-modelo-con-dinámica-vital)
 - [Pregunta 2](#pregunta-2)
 - [Pregunta 3](#pregunta-3)
 - [Pregunta 4](#pregunta-4)
@@ -37,8 +39,8 @@ El modelo maneja los diferentes conjuntos $`S`$, $`I`$ y $`R`$ como si
 fueran compartimentos bien separados y considera que los individuos
 pueden pasr de uno a otro en el caso de que se enfermen (cambio
 $`S\rightarrow I`$) o que una vez enfermos se recuperen (cambio
-$`I\rightarrow`$). Ademas, se asume que un individuo no puede pasar del
-conjunto de suceptibles directamente al conjunto de recuperados.
+$`I\rightarrow R`$). Ademas, se asume que un individuo no puede pasar
+del conjunto de suceptibles directamente al conjunto de recuperados.
 
 Con estos supuestos y consideraciones, las ecuaciones diferenciales del
 modelo SIR son:
@@ -195,6 +197,29 @@ ggplot(melt(output_p1, id="time"), aes(x=time, y=value, col=variable)) +
 
 ![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
 
+### Análisis de Resultados: Modelo con Dinámica Vital
+
+La inclusión de nacimientos ($`b`$) y muertes ($`\mu`$) transforma el
+comportamiento del sistema:
+
+- *Susceptibles ($`S`$):* Tras la caída inicial por el brote, la curva
+  no continúa descendiendo indefinidamente, sino que se estabiliza. Esto
+  ocurre porque los nacimientos ($`+bN`$) reponen constantemente la
+  población susceptible.
+- *Infectados ($`I`$):* Se observa el pico epidémico clásico, pero la
+  curva no cae a cero absoluto. Se mantiene en un nivel bajo y estable,
+  permitiendo que el virus persista en la población (endemia) al tener
+  siempre nuevos huéspedes disponibles.
+- *Recuperados ($`R`$):* Aumentan rápidamente tras el pico de infección
+  y luego se estabilizan, ya que la mortalidad ($`-\mu R`$) equilibra la
+  entrada de nuevos recuperados.
+
+*Conclusión:* El modelo pasa de ser un sistema cerrado (donde la
+epidemia termina por agotamiento de susceptibles) a un \*sistema
+abierto. Esto permite alcanzar un \*\*equilibrio endémico\*, donde la
+enfermedad coexiste indefinidamente con la población, siendo una
+representación más realista para enfermedades de larga duración
+
 ## Pregunta 2
 
 Considerando el modelo SIR básico, haga cambios para tomar en cuenta un
@@ -215,29 +240,159 @@ eliminada.
 deben vacunar para poder evitar una epidemia? La inmunidad de rebaño
 ocurre cuando $`R_{eff}< 1`$.
 
-``` r
-# Parámetros
-N_total <- 1000000
-v <- 0.8 # 80% vacunados
+*Enfoque del Modelo:* Para modelar un programa de vacunación preventivo
+asumimos que una fracción $`v`$ de la población es inmune desde el día
+0, por lo que los trasladamos directamente del compartimento de
+Susceptibles ($`S`$) al de Recuperados ($`R`$).
 
-# Condiciones iniciales modificadas por la vacuna
-# Los vacunados pasan directo a Recuperados (o un compartimento V)
+*Condiciones Iniciales:* \* $`S_0 = (1 - v)N`$ \* $`I_0 \approx 0`$
+(pequeña cantidad inicial) \* $`R_0 = vN`$ (vacunados)
+
+*Cálculo Analítico de la Fracción Mínima ($`v`$):* La inmunidad de
+rebaño se logra cuando el número reproductivo efectivo es menor a 1
+($`R_{eff} < 1`$), lo que impide que el brote crezca exponencialmente.
+
+``` math
+R_{eff} = R_0 \times \frac{S}{N} < 1
+```
+
+Sustituyendo $`S = (1-v)N`$ y sabiendo que $`R_0 = \beta / \gamma`$:
+
+``` math
+\frac{\beta}{\gamma} (1-v) < 1
+```
+
+Despejando para $`v`$, obtenemos la fórmula del umbral crítico de
+vacunación:
+
+``` math
+v > 1 - \frac{1}{R_0}
+```
+
+*Aplicación a los datos del problema:* \* $`\beta = 0.4`$,
+$`\gamma = 0.1 \implies R_0 = 4`$. \* Umbral: $`v > 1 - 1/4 = 0.75`$.
+
+> *Conclusión:* Se debe vacunar a más del *75%* de la población para
+> evitar la epidemia. En la siguiente simulación utilizamos $`v=0.8`$
+> (80%), por lo que esperamos ver que la infección se suprima
+> inmediatamente.
+
+``` r
+# 1. Definición de Parámetros
+beta_val <- 0.4
+gamma_val <- 0.1
+N_total <- 1000000
+v <- 0.50
+# 2. Condiciones Iniciales Modificadas
+init_vaccine <- c(S = (1 - v) * N_total - 1, 
+                  I = 1, 
+                  R = v * N_total)
+params_vaccine <- c(beta = beta_val, gamma = gamma_val)
+times_vaccine <- seq(0, 365*2, by = 1) # 2 años
+# 3. Simulación
+output_vaccine <- as.data.frame(ode(y = init_vaccine, 
+                                    times = times_vaccine, 
+                                    func = sir_model, 
+                                    parms = params_vaccine))
+# 4. Visualización
+ggplot(melt(output_vaccine, id="time"), aes(x=time, y=value, col=variable)) +
+  geom_line(linewidth=1) +
+  theme_minimal() +
+  labs(title = paste0("Dinámica con Vacunación del ", v*100, "%"),
+       y = "Población",
+       x = "Tiempo (días)")
+```
+
+![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+
+``` r
+# 1. Definición de Parámetros
+beta_val <- 0.4
+gamma_val <- 0.1
+N_total <- 1000000
+v <- 0.60
+# 2. Condiciones Iniciales Modificadas
+init_vaccine <- c(S = (1 - v) * N_total - 1, 
+                  I = 1, 
+                  R = v * N_total)
+params_vaccine <- c(beta = beta_val, gamma = gamma_val)
+times_vaccine <- seq(0, 365*2, by = 1) # 2 años
+# 3. Simulación
+output_vaccine <- as.data.frame(ode(y = init_vaccine, 
+                                    times = times_vaccine, 
+                                    func = sir_model, 
+                                    parms = params_vaccine))
+# 4. Visualización
+ggplot(melt(output_vaccine, id="time"), aes(x=time, y=value, col=variable)) +
+  geom_line(linewidth=1) +
+  theme_minimal() +
+  labs(title = paste0("Dinámica con Vacunación del ", v*100, "%"),
+       y = "Población",
+       x = "Tiempo (días)")
+```
+
+![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+
+``` r
+# 1. Definición de Parámetros
+beta_val <- 0.4
+gamma_val <- 0.1
+N_total <- 1000000
+v <- 0.70
+
+# 2. Condiciones Iniciales Modificadas
 init_vaccine <- c(S = (1 - v) * N_total - 1, 
                   I = 1, 
                   R = v * N_total)
 
-params_vaccine <- c(beta = 0.4, gamma = 0.1)
+params_vaccine <- c(beta = beta_val, gamma = gamma_val)
 times_vaccine <- seq(0, 365*2, by = 1) # 2 años
+# 3. Simulación
+output_vaccine <- as.data.frame(ode(y = init_vaccine, 
+                                    times = times_vaccine, 
+                                    func = sir_model, 
+                                    parms = params_vaccine))
+# 4. Visualización
+ggplot(melt(output_vaccine, id="time"), aes(x=time, y=value, col=variable)) +
+  geom_line(linewidth=1) +
+  theme_minimal() +
+  labs(title = paste0("Dinámica con Vacunación del ", v*100, "%"),
+       y = "Población",
+       x = "Tiempo (días)")
+```
 
-output_vaccine <- as.data.frame(ode(y = init_vaccine, times = times_vaccine, func = sir_model, parms = params_vaccine))
+![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+
+``` r
+# 1. Definición de Parámetros
+beta_val <- 0.4
+gamma_val <- 0.1
+N_total <- 1000000
+v <- 0.75 
+
+# 2. Condiciones Iniciales Modificadas
+# Removemos el 80% de S y lo ponemos en R
+init_vaccine <- c(S = (1 - v) * N_total - 1, 
+                  I = 1, 
+                  R = v * N_total)
+params_vaccine <- c(beta = beta_val, gamma = gamma_val)
+times_vaccine <- seq(0, 365*2, by = 1) # 2 años
+# 3. Simulación
+output_vaccine <- as.data.frame(ode(y = init_vaccine, 
+                                    times = times_vaccine, 
+                                    func = sir_model, 
+                                    parms = params_vaccine))
+# 4. Visualización
 
 ggplot(melt(output_vaccine, id="time"), aes(x=time, y=value, col=variable)) +
   geom_line(linewidth=1) +
   theme_minimal() +
-  labs(title = "Efecto de Vacunación (80% población)", subtitle = "Notar que infectados (I) no crece exponencialmente")
+  labs(title = paste0("Dinámica con Vacunación del ", v*100, "%"),
+       y = "Población",
+       x = "Tiempo (días)")
 ```
 
-![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
 ## Pregunta 3
 
@@ -269,80 +424,122 @@ b     &=  \frac{1}{70}years^{-1}\\
 y considere una duración de 400 años en sus cálculos.
 
 ``` r
-times_long <- seq(0, 365*400, by = 10) # 400 años, paso de 10 días para rapidez
+# 1. Configuración del Tiempo
+# Usamos un paso de 1 día para mantener la resolución de las oscilaciones,
+# aunque el horizonte sea de 400 años.
+times_long <- seq(0, 365*400, by = 1) 
 
-output_longterm <- as.data.frame(ode(y = initial_state_values, times = times_long, func = sir_vital_dynamics, parms = parameters_p1))
+# 2. Simulación
+
+output_longterm <- as.data.frame(ode(y = initial_state_values, 
+                                     times = times_long, 
+                                     func = sir_vital_dynamics, 
+                                     parms = parameters_p1))
+# 3. Visualización
+# Graficamos dividiendo el tiempo entre 365 para ver el eje X en "Años"
+ggplot(melt(output_longterm, id="time"), aes(x=time/365, y=value, col=variable)) +
+  geom_line(linewidth=0.8) +
+  theme_minimal() +
+  labs(title = "Dinámica SIR con Nacimientos y Muertes (Largo Plazo)", 
+       subtitle = "Convergencia al Equilibrio Endémico",
+       y = "Población",
+       x = "Tiempo (Años)",
+       color = "Grupo")
 ```
 
-    ## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-    ##       such that in the machine, T + H = T on the next step  
-    ##      (H = step size). Solver will continue anyway.
-    ## In above message, R1 = 39641.5, R2 = 3.51711e-12
-    ##  
-    ## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-    ##       such that in the machine, T + H = T on the next step  
-    ##      (H = step size). Solver will continue anyway.
-    ## In above message, R1 = 39641.5, R2 = 3.51711e-12
-    ##  
-    ## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-    ##       such that in the machine, T + H = T on the next step  
-    ##      (H = step size). Solver will continue anyway.
-    ## In above message, R1 = 39641.5, R2 = 3.51711e-12
-    ##  
-    ## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-    ##       such that in the machine, T + H = T on the next step  
-    ##      (H = step size). Solver will continue anyway.
-    ## In above message, R1 = 39641.5, R2 = 2.85728e-12
-    ##  
-    ## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-    ##       such that in the machine, T + H = T on the next step  
-    ##      (H = step size). Solver will continue anyway.
-    ## In above message, R1 = 39641.5, R2 = 2.85728e-12
-    ##  
-    ## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-    ##       such that in the machine, T + H = T on the next step  
-    ##      (H = step size). Solver will continue anyway.
-    ## In above message, R1 = 39641.5, R2 = 2.85728e-12
-    ##  
-    ## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-    ##       such that in the machine, T + H = T on the next step  
-    ##      (H = step size). Solver will continue anyway.
-    ## In above message, R1 = 39641.5, R2 = 2.37424e-12
-    ##  
-    ## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-    ##       such that in the machine, T + H = T on the next step  
-    ##      (H = step size). Solver will continue anyway.
-    ## In above message, R1 = 39641.5, R2 = 2.37424e-12
-    ##  
-    ## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-    ##       such that in the machine, T + H = T on the next step  
-    ##      (H = step size). Solver will continue anyway.
-    ## In above message, R1 = 39641.5, R2 = 2.37424e-12
-    ##  
-    ## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-    ##       such that in the machine, T + H = T on the next step  
-    ##      (H = step size). Solver will continue anyway.
-    ## In above message, R1 = 39641.5, R2 = 1.89233e-12
-    ##  
-    ## DLSODA-  Above warning has been issued I1 times.  
-    ##      It will not be issued again for this problem.
-    ## In above message, I1 = 10
-    ##  
-    ## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-    ##       taken on this call before reaching TOUT     
-    ## In above message, I1 = 5000
-    ##  
-    ## In above message, R1 = 39641.5
-    ## 
+![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
 ``` r
+times_long <- seq(0, 365*200, by = 1) 
+
+# 2. Simulación
+
+output_longterm <- as.data.frame(ode(y = initial_state_values, 
+                                     times = times_long, 
+                                     func = sir_vital_dynamics, 
+                                     parms = parameters_p1))
+# 3. Visualización
+# Graficamos dividiendo el tiempo entre 365 para ver el eje X en "Años"
 ggplot(melt(output_longterm, id="time"), aes(x=time/365, y=value, col=variable)) +
-  geom_line(linewidth=1) +
+  geom_line(linewidth=0.8) +
   theme_minimal() +
-  labs(title = "Dinámica a Largo Plazo (400 años)", x = "Tiempo (Años)")
+  labs(title = "Dinámica SIR con Nacimientos y Muertes (Largo Plazo)", 
+       subtitle = "Convergencia al Equilibrio Endémico",
+       y = "Población",
+       x = "Tiempo (Años)",
+       color = "Grupo")
 ```
 
-![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+
+``` r
+times_long <- seq(0, 365*100, by = 1) 
+
+# 2. Simulación
+
+output_longterm <- as.data.frame(ode(y = initial_state_values, 
+                                     times = times_long, 
+                                     func = sir_vital_dynamics, 
+                                     parms = parameters_p1))
+# 3. Visualización
+# Graficamos dividiendo el tiempo entre 365 para ver el eje X en "Años"
+ggplot(melt(output_longterm, id="time"), aes(x=time/365, y=value, col=variable)) +
+  geom_line(linewidth=0.8) +
+  theme_minimal() +
+  labs(title = "Dinámica SIR con Nacimientos y Muertes (Largo Plazo)", 
+       subtitle = "Convergencia al Equilibrio Endémico",
+       y = "Población",
+       x = "Tiempo (Años)",
+       color = "Grupo")
+```
+
+![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+
+``` r
+times_long <- seq(0, 365*50, by = 1) 
+
+# 2. Simulación
+
+output_longterm <- as.data.frame(ode(y = initial_state_values, 
+                                     times = times_long, 
+                                     func = sir_vital_dynamics, 
+                                     parms = parameters_p1))
+# 3. Visualización
+# Graficamos dividiendo el tiempo entre 365 para ver el eje X en "Años"
+ggplot(melt(output_longterm, id="time"), aes(x=time/365, y=value, col=variable)) +
+  geom_line(linewidth=0.8) +
+  theme_minimal() +
+  labs(title = "Dinámica SIR con Nacimientos y Muertes (Largo Plazo)", 
+       subtitle = "Convergencia al Equilibrio Endémico",
+       y = "Población",
+       x = "Tiempo (Años)",
+       color = "Grupo")
+```
+
+![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+
+``` r
+times_long <- seq(0, 365*1, by = 1) 
+
+# 2. Simulación
+
+output_longterm <- as.data.frame(ode(y = initial_state_values, 
+                                     times = times_long, 
+                                     func = sir_vital_dynamics, 
+                                     parms = parameters_p1))
+# 3. Visualización
+# Graficamos dividiendo el tiempo entre 365 para ver el eje X en "Años"
+ggplot(melt(output_longterm, id="time"), aes(x=time/365, y=value, col=variable)) +
+  geom_line(linewidth=0.8) +
+  theme_minimal() +
+  labs(title = "Dinámica SIR con Nacimientos y Muertes (Largo Plazo)", 
+       subtitle = "Convergencia al Equilibrio Endémico",
+       y = "Población",
+       x = "Tiempo (Años)",
+       color = "Grupo")
+```
+
+![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
 ## Pregunta 4
 
@@ -365,30 +562,95 @@ eliminada.
 
 ¿Cómo se puede calcular la fracción mínima $`v`$ de personas que se
 deben vacunar para poder evitar una epidemia? La inmunidad de rebaño
-ocurre cuando $`R_{eff}< 1`$.
+ocurre cuando $`R_{eff}< 1`$
+
+*Análisis Analítico del Umbral:*
+
+En este caso, los parámetros han cambiado a $`\beta=0.6`$ y
+$`\gamma=0.1`$. Esto modifica el número reproductivo básico:
+``` math
+R_0 = \frac{0.6}{0.1} = 6
+```
+
+Para lograr la inmunidad de rebaño ($`R_{eff} < 1`$), calculamos la
+nueva fracción mínima $`v`$:
+``` math
+v > 1 - \frac{1}{R_0} = 1 - \frac{1}{6} \approx 0.833
+```
+
+*Interpretación:* Con estos nuevos parámetros, *es necesario vacunar al
+83.3%* de la población para evitar la epidemia. \* Esto significa que el
+escenario solicitado del *75% no será suficiente* para detener el brote
+completamente (aunque lo reducirá), y necesitaremos un porcentaje mayor
+(ej. 90%) para observar la eliminación total.
 
 ``` r
+# Definición de parámetros
+N_total <- 1000000
 params_p4 <- c(beta=0.6, gamma=0.1)
-times_p4 <- seq(0, 365*2, 1)
-v_scenarios <- c(0, 0.5, 0.9)
+times_p4 <- seq(0, 365*2, 1) # 2 años
+
+# Escenarios de vacunación: 
+# Agregamos 0.84 y 0.95 para ver el efecto de la inmunidad de rebaño (>83.3%)
+v_scenarios <- c(0, 0.5, 0.75, 0.84, 0.95)
 
 results_list <- list()
 
+# Bucle para simular cada escenario
 for(v in v_scenarios){
-  y_init <- c(S = (1-v)*N_total - 1, I=1, R=v*N_total)
+  # Condiciones iniciales:
+  # Movemos el porcentaje 'v' directamente a Recuperados
+  y_init <- c(S = (1-v)*N_total - 1, 
+              I = 1, 
+              R = v*N_total)
+  
+  # Asumiendo que la función 'sir_model' ya está definida en chunks anteriores
   out <- as.data.frame(ode(y=y_init, times=times_p4, func=sir_model, parms=params_p4))
-  out$vacunacion <- paste0(v*100, "%")
+  
+  # Etiquetamos el escenario para la gráfica
+  out$vacunacion <- factor(paste0(v*100, "%"), 
+                           levels = paste0(v_scenarios*100, "%")) # Ordenar factores
   results_list[[length(results_list)+1]] <- out
 }
 
+# Unir todos los datos
 all_results <- do.call(rbind, results_list)
+```
 
-# Graficamos SOLO los infectados para comparar
+``` r
+ggplot(all_results, aes(x=time, y=S, color=vacunacion)) +
+  geom_line(linewidth=1) +
+  theme_minimal() +
+  labs(title = "Dinámica de Susceptibles",
+       subtitle = "Beta = 0.6, Gamma = 0.1 (R0 = 6)",
+       y = "Población Susceptible",
+       x = "Tiempo (días)",
+       color = "% Vacunado")
+```
+
+![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+
+``` r
 ggplot(all_results, aes(x=time, y=I, color=vacunacion)) +
   geom_line(linewidth=1) +
   theme_minimal() +
-  labs(title = "Comparación de Infectados según % de Vacunación", 
-       y = "Número de Infectados Activos")
+  labs(title = "Dinámica de Infectados",
+       y = "Infectados Activos",
+       x = "Tiempo (días)",
+       color = "% Vacunado")
 ```
 
-![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+
+``` r
+ggplot(all_results, aes(x=time, y=R, color=vacunacion)) +
+  geom_line(linewidth=1) +
+  theme_minimal() +
+  labs(title = "Dinámica de Recuperados (Inmunes)",
+       subtitle = "Incluye vacunados iniciales + recuperados naturales",
+       y = "Población Inmune",
+       x = "Tiempo (días)",
+       color = "% Vacunado")
+```
+
+![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
