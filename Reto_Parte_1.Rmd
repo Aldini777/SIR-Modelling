@@ -89,18 +89,6 @@ ggplot(data = output_long, aes(x = time, y = value, colour = variable)) +
   theme(legend.position = "bottom")
 
 ```
-
-
-Con el modelo SIR se define la constante 
-\[R_0=\frac{\beta}{\gamma}\]
-que representa el número de personas que cada contagiado infecta. Para que la enfermedad analizada logre dispararse en forma de una epidemia debe cumplirse que $R_0 > 1$. 
-
-También se define 
-\[R_{eff}=R_0\frac{S}{N}\]
-que corresponde al número promedio de personas que cada contagiado infecta. Este segundo valor $R_{eff}$ toma en cuenta de que durante la evolución de la pandemia, al aumentar del número de personas inmunes en la población cada persona contagiada infectará a un número de personas cada vez menor.
-
-
-
 ## Pregunta 1
 Analizando el dataframe "output" encuentre el día en que el número de contagios es máximo.
 
@@ -113,7 +101,10 @@ max_infectados <- fila_max_I$I
 cat("El pico de contagios ocurre en el día:", dia_pico, "\n")
 cat("Número máximo de infectados:", round(max_infectados))
 ```
-*Relación analítica en el máximo*:Para encontrar la relación entre los parámetros en el máximo de la curva de infección ($I$), analizamos la ecuación diferencial de $dI/dt$:$$ \frac{dI}{dt} = \beta \frac{I}{N} S - \gamma I $$En el punto máximo (el pico), la pendiente es cero ($dI/dt = 0$). Entonces:$$ 0 = I \left( \beta \frac{S}{N} - \gamma \right) $$Como $I \neq 0$, debemos tener:$$ \beta \frac{S}{N} = \gamma \implies S = \frac{\gamma}{\beta} N $$O equivalentemente, usando el número reproductivo básico $R_0 = \beta / \gamma$:$$ S_{pico} = \frac{N}{R_0} $$Esto significa que el pico ocurre exactamente cuando la población susceptible $S$ cae hasta alcanzar el umbral $N/R_0$.
+*Relación analítica en el máximo*:Para encontrar la relación entre los parámetros en el máximo de la curva de infección ($I$), analizamos la ecuación diferencial de $dI/dt$:$$ \frac{dI}{dt} = \beta \frac{I}{N} S - \gamma I $$En el punto máximo (el pico), la pendiente es cero ($dI/dt = 0$). Entonces:$$ 0 = I \left( \beta \frac{S}{N} - \gamma \right) $$ Para que esta multiplicación sea igual a cero, hay dos opciones:$I = 0$: Esto significaría que no hay infectados (lo cual es el inicio o el fin de la epidemia, pero no el pico).$\left( \beta \frac{S}{N} - \gamma \right) = 0$: Esta es la condición que ocurre justo en el pico de la curva. Como $I \neq 0$, debemos tener:$$ \beta \frac{S}{N} = \gamma \implies S = \frac{\gamma}{\beta} N $$
+Sin embargo, si los valores de $\gamma$ y $\beta$ cambian, se verá afectada la curva por lo que el punto máximo cambiará
+
+**Interpretación:** El máximo de contagios ocurre exactamente cuando el número de susceptibles ($S$) cae hasta el nivel $\frac{\gamma}{\beta}N$. A partir de este momento, como $S$ sigue disminuyendo, la tasa de recuperación supera a la de infección y la curva comienza a bajar.
 
 ## Pregunta 2 Reducción de Susceptibles
 Analizando el dataframe encuentre después de cuántos días el número de "susceptibles" se reduce a la mitad.
