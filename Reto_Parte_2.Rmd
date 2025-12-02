@@ -3,13 +3,20 @@ title: "Reto: Modelo SIR y Vacunación Parte 2"
 author: "Aldo Resendiz, Aldo Radamés Corral Verdugo, Virginia Díaz Moreno."
 date: "Noviembre de 2025"
 output: 
-  github_document:
+  html_document:
     toc: true
+    self_contained: true
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
+
+```{r}
+#install.packages("plotly") # Si no la tienes
+library(plotly)
+```
+
 
 ## El modelo SIR
 
@@ -419,24 +426,70 @@ ggplot(melt(output_longterm, id="time"), aes(x=time/365, y=value, col=variable))
 ```
 
 ```{r}
-times_long <- seq(0, 365*1, by = 1) 
-
-# 2. Simulación
-
+# --- 1. PREPARACIÓN DE DATOS (Igual que ya tenías) ---
+# Simulamos los 400 años con resolución diaria
+times_long <- seq(0, 365*400, by = 1) 
 output_longterm <- as.data.frame(ode(y = initial_state_values, 
                                      times = times_long, 
                                      func = sir_vital_dynamics, 
                                      parms = parameters_p1))
-# 3. Visualización
-# Graficamos dividiendo el tiempo entre 365 para ver el eje X en "Años"
-ggplot(melt(output_longterm, id="time"), aes(x=time/365, y=value, col=variable)) +
-  geom_line(linewidth=0.8) +
+
+# Agregamos columna de años para facilitar la lectura
+output_longterm$Year <- output_longterm$time / 365
+
+# Convertimos a formato largo (Melt)
+data_long <- melt(output_longterm, id = c("time", "Year"))
+
+# --- 2. TRUCO PARA ANIMACIÓN ACUMULATIVA ---
+# Para que la línea "crezca" y no solo sea un punto moviéndose, 
+# necesitamos crear "copias" de los datos para cada frame del slider.
+# Queremos saltos de 25 años.
+
+# Definimos los cortes de tiempo (25, 50, 75... 400)
+cortes_anios <- seq(1, 400, by = 5)
+
+accumulated_data <- list()
+
+# Bucle estilo Python para crear los frames
+for(anio_corte in cortes_anios) {
+  # Filtramos los datos desde el inicio (0) hasta el año de corte actual
+  # (Downsampling): Tomamos datos cada 10 días para que la animación no pese tanto y sea fluida
+  subset_data <- data_long[data_long$Year <= anio_corte & data_long$time %% 10 == 0, ]
+  
+  # Etiquetamos estos datos con el Frame correspondiente
+  subset_data$Frame <- as.factor(paste("Año", anio_corte))
+  
+  # Guardamos en la lista
+  accumulated_data[[length(accumulated_data) + 1]] <- subset_data
+}
+
+# Unimos todo en un solo DataFrame gigante
+data_for_plotly <- do.call(rbind, accumulated_data)
+
+# --- 3. GENERAR LA GRÁFICA CON GGPLOT + PLOTLY ---
+
+# Creamos el ggplot estático, pero agregamos el parámetro 'frame'
+p <- ggplot(data_for_plotly, aes(x = Year, y = value, color = variable, frame = Frame)) +
+  geom_line(linewidth = 0.8) +
   theme_minimal() +
-  labs(title = "Dinámica SIR con Nacimientos y Muertes (Largo Plazo)", 
-       subtitle = "Convergencia al Equilibrio Endémico",
+  labs(title = "Evolución Dinámica de la Epidemia (Saltos de 25 años)",
        y = "Población",
        x = "Tiempo (Años)",
-       color = "Grupo")
+       color = "Grupo") +
+  # Fijamos los límites para que los ejes no "bailen" durante la animación
+  scale_x_continuous(limits = c(0, 400)) +
+  scale_y_continuous(limits = c(0, 1000000))
+
+# La magia: Convertir a interactivo
+ggplotly(p) %>% 
+  animation_opts(
+    frame = 200, # Duración de cada frame en milisegundos (1 segundo)
+    transition = 0, # Transición instantánea para que parezca que la línea se alarga
+    redraw = FALSE
+  ) %>%
+  animation_slider(
+    currentvalue = list(prefix = "Avance: ")
+  )
 ```
 
 
