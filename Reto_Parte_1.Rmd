@@ -1,51 +1,53 @@
 ---
-title: "Reto: Modelo SIR y Vacunación Parte 1"
-author: "Aldo Resendiz Cravioto, Aldo Radamés Corral Verdugo, Virginia Díaz Moreno."
+title: "Challenge: SIR Model and Vaccination Part 1"
+author: "Aldo Resendiz, Aldo Radamés Corral Verdugo, Virginia Díaz Moreno."
 date: "Noviembre de 2025"
 output: 
   github_document:
     toc: true
 ---
 
-```{r setup, include=FALSE}
+```{r}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
-## El modelo SIR
 
-Consideremos un modelo para describir la dinámica de un grupo de individuos de una población con exposición a una enfermedad que puede contagiarse entre los miembros de la población. Esto puede modelarse como un sistema dinámico denominado $SIR$ para una población de $N$ individuos en la que se considera la interacción entre un conjunto de $S$ individuos *suceptibles* de contraer la enfermedad, un conjunto $I$ de individuos *infectados* y uno conjunto $R$ de individuos *recuperados* de la enfermedad.
+The SIR model
 
-Este modelo tiene los siguientes supuestos:
+Let us consider a model to describe the dynamics of a group of individuals in a population with exposure to a disease that can be spread among the members of the population. This can be modeled as a dynamic system called $SIR$ for a population of $N$ individuals where the interaction between a set of $S$ susceptible individuals to contract the disease, a set $I$ of infected individuals, and a set $R$ of recovered individuals from the disease is considered.
 
-* la probabilidades de infectarse son iguales para todos los individuos de la población;
+This model has the following assumptions:
 
-* la población es homogénea, es decir que los riesgos de infectarse son iguales para toos los suceptibles y que los tiempos para recuperarse son iguales para todos los infectados; y
+the probabilities of getting infected are equal for all individuals in the population;
 
-* el tamaño $N$ de la población es constante.
+the population is homogeneous, meaning the risks of getting infected are equal for all susceptibles and the times to recover are equal for all infected; and
 
-El modelo maneja los diferentes conjuntos $S$, $I$ y $R$ como si fueran compartimentos bien separados y considera que los individuos pueden pasr de uno a otro en el caso de que se enfermen (cambio $S\rightarrow I$) o que una vez enfermos se recuperen (cambio $I\rightarrow R$). Ademas, se asume que un individuo no puede pasar del conjunto de suceptibles directamente al conjunto de recuperados.
+the population size $N$ is constant.
 
-Con estos supuestos y consideraciones, las ecuaciones diferenciales del modelo SIR son:
-\[
-\begin{aligned}
+The model handles the different sets $S$, $I$, and $R$ as if they were well-separated compartments and considers that individuals can pass from one to another in the event they get sick (change $S\rightarrow I$) or once sick they recover (change $I\rightarrow R$). Furthermore, it is assumed that an individual cannot pass from the susceptible set directly to the recovered set.
+
+With these assumptions and considerations, the differential equations of the SIR model are:
+
+$$\begin{aligned}
 \frac{dS}{dt}&= -\beta \frac{I}{N} S\\
 \frac{dI}{dt}&= \beta\frac{I}{N}S-\gamma I\\\
 \frac{dR}{dt}&= \gamma I
-\end{aligned}
-\]
-donde:
+\end{aligned}$$
 
-* N=S+R+I
+where:
 
-* la cantidad $\beta\frac{I}{N}$ representa la razón con que las personas salen del compartimento S (se infectan);
+N=S+R+I
 
-* en la primera ecuación $dS$ representa el cambio debido a las personas que salen del compartimento $S$ (el signo negativo se debe a que las personas salen)
+the quantity $\beta\frac{I}{N}$ represents the rate at which people leave compartment S (get infected);
 
-* en la segunda ecuación $dI$ representa el cambio debido a las personas que salen del compartimento $I$ (una parte se debe a las personas que del compartimento $S$ pasan al compartimento $I$, y otra parte se debe a las personas que salen del compartimento $I$ porque se recuperan);
+in the first equation $dS$ represents the change due to people leaving compartment $S$ (the negative sign is because people are leaving)
 
-* la cantidad $\gamma$ representa la razón con que las personas se recuperan.
+in the second equation $dI$ represents the change due to people entering compartment $I$ (a part is due to people passing from compartment $S$ to compartment $I$, and another part is due to people leaving compartment $I$ because they recover);
 
+the quantity $\gamma$ represents the rate at which people recover.
 ```{r}
+
+
 # PACKAGES:
 library(deSolve)
 library(reshape2)
@@ -59,9 +61,9 @@ sir_model <- function(time, state, parameters) {
     with(as.list(c(state, parameters)), {
         N <- S+I+R 
         lambda <- beta * I/N
-        dS <- -lambda * S                
-        dI <- lambda * S - gamma * I   
-        dR <- gamma * I                  
+        dS <- -lambda * S                 
+        dI <- lambda * S - gamma * I    
+        dR <- gamma * I                   
         return(list(c(dS, dI, dR))) 
     })
 }
@@ -70,106 +72,137 @@ output <- as.data.frame(ode(y = initial_state_values,
                             times = times, 
                             func = sir_model,
                             parms = parameters))
-```
-
-
-##  Gráficos de la evolución del sistema
-
-```{r }
-
-# Gráfico del modelo base
-output_long <- melt(as.data.frame(output), id = "time")                  
-
-ggplot(data = output_long, aes(x = time, y = value, colour = variable)) +  
-  geom_line(linewidth = 1) +                                           
-  xlab("Tiempo (días)")+                                         
-  ylab("Número de individuos") +                                       
-  labs(title = "Modelo SIR Básico", colour = "Subconjunto") +
-  theme_minimal() +
-  theme(legend.position = "bottom")
 
 ```
-Con el modelo SIR se define la constante 
-\[R_0=\frac{\beta}{\gamma}\]
-que representa el número de personas que cada contagiado infecta. Para que la enfermedad analizada logre dispararse en forma de una epidemia debe cumplirse que $R_0 > 1$. 
 
-También se define 
-\[R_{eff}=R_0\frac{S}{N}\]
-que corresponde al número promedio de personas que cada contagiado infecta. Este segundo valor $R_{eff}$ toma en cuenta de que durante la evolución de la pandemia, al aumentar del número de personas inmunes en la población cada persona contagiada infectará a un número de personas cada vez menor. 
-
-## Pregunta 1
-Analizando el dataframe "output" encuentre el día en que el número de contagios es máximo.
+# Plots of system evolution
 
 ```{r}
-# Encontrar la fila con el valor máximo de infectados (I)
+# Base model plot
+output_long <- melt(as.data.frame(output), id = "time")                   
+
+ggplot(data = output_long, aes(x = time, y = value, colour = variable)) +  
+  geom_line(linewidth = 1) +                                    
+  xlab("Time (days)")+                                  
+  ylab("Number of individuals") +                                      
+  labs(title = "Basic SIR Model", colour = "Subset") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+
+With the SIR model, the constant
+
+
+$$R\_0=\frac{\beta}{\gamma}$$
+
+
+is defined, representing the number of people each infected person infects. For the analyzed disease to trigger an epidemic, $R_0 > 1$ must be met.
+
+Also defined is
+
+
+$$R\_{eff}=R\_0\frac{S}{N}$$
+
+
+which corresponds to the average number of people each infected person infects. This second value $R_{eff}$ takes into account that during the evolution of the pandemic, as the number of immune people in the population increases, each infected person will infect a decreasing number of people.
+
+# Question 1
+
+Analyzing the "output" dataframe, find the day when the number of infections is maximum.
+```{r}
+# Find the row with the maximum value of infected (I)
 fila_max_I <- output[which.max(output$I), ]
 dia_pico <- fila_max_I$time
 max_infectados <- fila_max_I$I
 
-cat("El pico de contagios ocurre en el día:", dia_pico, "\n")
-cat("Número máximo de infectados:", round(max_infectados))
+cat("The peak of infections occurs on day:", dia_pico, "\n")
+cat("Maximum number of infected:", round(max_infectados))
 ```
-*Relación analítica en el máximo*:Para encontrar la relación entre los parámetros en el máximo de la curva de infección ($I$), analizamos la ecuación diferencial de $dI/dt$:$$ \frac{dI}{dt} = \beta \frac{I}{N} S - \gamma I $$En el punto máximo (el pico), la pendiente es cero ($dI/dt = 0$). Entonces:$$ 0 = I \left( \beta \frac{S}{N} - \gamma \right) $$ Para que esta multiplicación sea igual a cero, hay dos opciones:$I = 0$: Esto significaría que no hay infectados (lo cual es el inicio o el fin de la epidemia, pero no el pico).$\left( \beta \frac{S}{N} - \gamma \right) = 0$: Esta es la condición que ocurre justo en el pico de la curva. Como $I \neq 0$, debemos tener:$$ \beta \frac{S}{N} = \gamma \implies S = \frac{\gamma}{\beta} N $$
-Sin embargo, si los valores de $\gamma$ y $\beta$ cambian, se verá afectada la curva por lo que el punto máximo cambiará
 
-**Interpretación:** El máximo de contagios ocurre exactamente cuando el número de susceptibles ($S$) cae hasta el nivel $\frac{\gamma}{\beta}N$. A partir de este momento, como $S$ sigue disminuyendo, la tasa de recuperación supera a la de infección y la curva comienza a bajar.
+Analytical relationship at the maximum: To find the relationship between the parameters at the maximum of the infection curve ($I$), we analyze the differential equation of $dI/dt$: $$ \frac{dI}{dt} = \beta \frac{I}{N} S - \gamma I$$ In the maximum point (the peak), the slope is zero ($dI/dt = 0$). Then:
+$$ 0 = I \left( \beta \frac{S}{N} - \gamma \right) $$ For this multiplication to be zero, there are two options:$I = 0$: This would mean there are no infected people (which is the beginning or the end of the epidemic, but not the peak).$\left( \beta \frac{S}{N} - \gamma \right) = 0$: This is the condition that occurs just at the peak of the curve. As $I \neq 0$, we must have:$$ \beta \frac{S}{N} = \gamma \implies S = \frac{\gamma}{\beta} N $$
+However, if values of $\gamma$ and $\beta$ change, the curve will be affected so the maximum point will change.
 
-## Pregunta 2 Reducción de Susceptibles
-Analizando el dataframe encuentre después de cuántos días el número de "susceptibles" se reduce a la mitad.
+Interpretation: The maximum of infections occurs exactly when the number of susceptibles ($S$) falls to the level $\frac{\gamma}{\beta}N$. From this moment on, as $S$ continues to decrease, the recovery rate exceeds the infection rate and the curve begins to fall.
+
+# Question 2 Reduction of Susceptibles
+
+Analyzing the dataframe, find after how many days the number of "susceptibles" is reduced to half.
 ```{r}
 S_inicial <- initial_state_values["S"]
 umbral_mitad <- S_inicial / 2
 
-# Filtrar los tiempos donde S ya es menor o igual a la mitad
-fila_mitad <- subset(output, S <= umbral_mitad)[1, ] # Tomamos el primer dato
+# Filter times where S is already less than or equal to half
+fila_mitad <- subset(output, S <= umbral_mitad)[1, ] # We take the first datum
 
-cat("El número de susceptibles cae a la mitad aprox. en el día:", fila_mitad$time, "\n")
-cat("Valor de S en ese día:", round(fila_mitad$S))
+cat("The number of susceptibles falls to half approx. on day:", fila_mitad$time, "\n")
+cat("Value of S on that day:", round(fila_mitad$S))
 ```
 
-### Solución Analítica: Pregunta 2
 
-**Objetivo:** Encontrar una fórmula analítica para el tiempo $t$ necesario para que el número de susceptibles ($S$) se reduzca a la mitad de su valor inicial ($S_0/2$), en función del parámetro $\beta$.
+## Analytical Solution: Question 2
 
-**1. Planteamiento de la Ecuación**
-Partimos de la ecuación diferencial para los susceptibles del modelo SIR:
+Objective: Find an analytical formula for the time $t$ necessary for the number of susceptibles ($S$) to reduce to half of its initial value ($S_0/2$), as a function of parameter $\beta$.
+
+1. Equation Setup
+We start from the differential equation for susceptibles of the SIR model:
+
+
 $$\frac{dS}{dt} = -\beta \frac{I}{N} S$$
 
-**2. Aproximación del Modelo (Reducción a SI)**
-Para resolver analíticamente, asumimos que en esta fase inicial el número de recuperados es despreciable, por lo que la población se conserva como $N \approx S + I$. Esto nos permite expresar $I$ en términos de $S$:
+2. Model Approximation (Reduction to SI)
+To solve analytically, we assume that in this initial phase the number of recovered is negligible, so the population is conserved as $N \approx S + I$. This allows us to express $I$ in terms of $S$:
+
+
 $$I = N - S$$
 
-Sustituyendo en la ecuación diferencial:
+Substituting in the differential equation:
+
+
 $$\frac{dS}{dt} = -\frac{\beta}{N} (N - S) S$$
 
-**3. Integración**
-Separamos las variables ($S$ a la izquierda, $t$ a la derecha) e integramos usando fracciones parciales:
+3. Integration
+We separate variables ($S$ to the left, $t$ to the right) and integrate using partial fractions:
+
+
 $$\int \frac{1}{S(N-S)} dS = \int -\frac{\beta}{N} dt$$
 
 $$\frac{1}{N} \ln\left( \frac{S}{N-S} \right) = -\frac{\beta}{N} t + C$$
 
-Multiplicando por $N$, obtenemos la solución general (Ecuación Logística):
+Multiplying by $N$, we obtain the general solution (Logistic Equation):
+
+
 $$\ln\left( \frac{S}{N-S} \right) = -\beta t + C'$$
 
-**4. Condiciones Iniciales y Resolución**
-* **Al tiempo $t=0$:** Asumimos $S_0 \approx N$ y un número muy pequeño de infectados $I_0$ (ej. 1). La constante de integración resulta $C' \approx \ln(N)$.
-* **Condición objetivo:** Buscamos el tiempo $t$ cuando $S = S_0 / 2 \approx N/2$.
+4. Initial Conditions and Resolution
 
-Sustituyendo $S = N/2$ en la ecuación:
+At time $t=0$: We assume $S_0 \approx N$ and a very small number of infected $I_0$ (e.g., 1). The integration constant results in $C' \approx \ln(N)$.
+
+Target condition: We look for time $t$ when $S = S_0 / 2 \approx N/2$.
+
+Substituting $S = N/2$ in the equation:
+
+
 $$\ln\left( \frac{N/2}{N - N/2} \right) = -\beta t + \ln(N)$$
 
-El término del logaritmo se simplifica a $\ln(1)$, que es 0:
+The logarithm term simplifies to $\ln(1)$, which is 0:
+
+
 $$0 = -\beta t + \ln(N)$$
 
-**5. Fórmula Final**
-Despejamos $t$:
+5. Final Formula
+We solve for $t$:
 
 $$t = \frac{\ln(N)}{\beta}$$
 
-> **Interpretación:** Bajo el supuesto de una población inicialmente casi totalmente susceptible, el tiempo que tarda la enfermedad en infectar a la mitad de la población es inversamente proporcional a la tasa de transmisión $\beta$ y proporcional al logaritmo del tamaño de la población.
+## Interpretation: 
 
-## Pregunta 3 Variación de $\beta$ (Fuerza de infección)
-Estudiamos la dinámica manteniendo $\gamma = 0.1$ y variando $\beta$.Valores de $\beta$: 0.1, 0.3, 0.7, 0.9, 1.2.
+Under the assumption of an initially almost totally susceptible population, the time it takes for the disease to infect half the population is inversely proportional to the transmission rate $\beta$ and proportional to the logarithm of the population size.
+
+# Question 3 Variation of $\beta$ (Force of infection)
+
+We study the dynamics maintaining $\gamma = 0.1$ and varying $\beta$. Values of $\beta$: 0.1, 0.3, 0.7, 0.9, 1.2.
 ```{r}
 betas <- c(0.1, 0.3, 0.7, 0.9, 1.2)
 gamma_fijo <- 0.1
@@ -186,36 +219,39 @@ data_p3 <- do.call(rbind, resultados_p3)
 
 ggplot(data_p3, aes(x=time, y=I, color=beta)) +
   geom_line(size=1) +
-  labs(title = "Dinámica variando Beta (Gamma = 0.1)", 
-       y = "Infectados", color = "Beta") +
+  labs(title = "Dynamics varying Beta (Gamma = 0.1)", 
+       y = "Infected", color = "Beta") +
   theme_minimal()
-```
-```{r}
+
+
 ggplot(data_p3, aes(x=time, y=S, color=beta)) +
   geom_line(size=1) +
-  labs(title = "Dinámica de Susceptibles (S)", 
-       subtitle = "Variando Beta con Gamma = 0.1",
-       y = "Población Susceptible", 
-       x = "Tiempo (días)",
+  labs(title = "Dynamics of Susceptibles (S)", 
+       subtitle = "Varying Beta with Gamma = 0.1",
+       y = "Susceptible Population", 
+       x = "Time (days)",
        color = "Beta") +
   theme_minimal()
-```
-```{r}
+
+
 ggplot(data_p3, aes(x=time, y=R, color=beta)) +
   geom_line(size=1) +
-  labs(title = "Dinámica de Recuperados (R)", 
-       subtitle = "Variando Beta con Gamma = 0.1",
-       y = "Población Recuperada", 
-       x = "Tiempo (días)",
+  labs(title = "Dynamics of Recovered (R)", 
+       subtitle = "Varying Beta with Gamma = 0.1",
+       y = "Recovered Population", 
+       x = "Time (days)",
        color = "Beta") +
   theme_minimal()
 ```
 
-Se observa que con una fuerza de infección $\beta \le 0.1$, no ocurre ninguna propagación efectiva de la enfermedad. Para que inicie un brote, el valor de $\beta$ debe encontrarse en el rango $0.1 < \beta \le 0.3$. Sin embargo, para que se desarrolle una **epidemia significativa**, es necesario que $\beta$ sea mayor a $0.7$, sin importar la duración de la simulación. Por otra parte, con valores aún mayores (p. ej. $\beta = 1.2$), la infección se propaga con tal velocidad que el sistema alcanza su estado estable mucho más rápido.
+It is observed that with a force of infection $\beta \le 0.1$, no effective propagation of the disease occurs. For an outbreak to start, the value of $\beta$ must be in the range $0.1 < \beta \le 0.3$. However, for a significant epidemic to develop, it is necessary that $\beta$ be greater than $0.7$, regardless of the simulation duration. On the other hand, with even higher values (e.g., $\beta = 1.2$), the infection spreads with such speed that the system reaches its steady state much faster.
 
-## Pregunta 4 Variación de $\gamma$ (Recuperación)
-Estudiamos la dinámica manteniendo $\beta = 1$ y variando $\gamma$.Valores de $\gamma$: 0.025, 0.2, 0.5, 1.
+# Question 4 Variation of $\gamma$ (Recovery)
+
+We study the dynamics maintaining $\beta = 1$ and varying $\gamma$. Values of $\gamma$: 0.025, 0.2, 0.5, 1.
 ```{r}
+
+
 beta_fijo <- 1
 gammas <- c(0.025, 0.2, 0.5, 1)
 resultados_p4 <- list()
@@ -231,44 +267,48 @@ data_p4 <- do.call(rbind, resultados_p4)
 
 ggplot(data_p4, aes(x=time, y=I, color=gamma)) +
   geom_line(size=1) +
-  labs(title = "Dinámica variando Gamma (Beta = 1)", 
-       y = "Infectados", color = "Gamma") +
+  labs(title = "Dynamics varying Gamma (Beta = 1)", 
+       y = "Infected", color = "Gamma") +
   theme_minimal()
-```
-```{r}
+
+
 ggplot(data_p4, aes(x=time, y=S, color=gamma)) +
   geom_line(size=1) +
-  labs(title = "Dinámica de Susceptibles (S)", 
-       subtitle = "Variando Gamma con Beta = 1",
-       y = "Población Susceptible", 
-       x = "Tiempo (días)",
+  labs(title = "Dynamics of Susceptibles (S)", 
+       subtitle = "Varying Gamma with Beta = 1",
+       y = "Susceptible Population", 
+       x = "Time (days)",
        color = "Gamma") +
   theme_minimal()
-```
-```{r}
+
+
 ggplot(data_p4, aes(x=time, y=R, color=gamma)) +
   geom_line(size=1) +
-  labs(title = "Dinámica de Recuperados (R)", 
-       subtitle = "Variando Gamma con Beta = 1",
-       y = "Población Recuperada", 
-       x = "Tiempo (días)",
+  labs(title = "Dynamics of Recovered (R)", 
+       subtitle = "Varying Gamma with Beta = 1",
+       y = "Recovered Population", 
+       x = "Time (days)",
        color = "Gamma") +
   theme_minimal()
 ```
 
-### Análisis de la variabilidad de $\gamma$
 
-Al analizar las gráficas, se observa claramente una relación inversa entre la tasa de recuperación $\gamma$ y el alcance de la enfermedad: mientras menor es $\gamma$ (lo que implica un tiempo de enfermedad más largo), mayor es el número de personas infectadas.
+### Analysis of the variability of $\gamma$
 
-Particularmente, en el escenario donde $\gamma = 1$ (siendo $\beta = 1$), notamos que **no ocurre una epidemia**. Esto sucede porque los individuos se recuperan tan rápido que la enfermedad no logra propagarse eficazmente. De esto podemos inferir la condición necesaria para el brote:
+When analyzing the graphs, an inverse relationship is clearly observed between the recovery rate $\gamma$ and the scope of the disease: the lower $\gamma$ is (which implies a longer disease time), the greater the number of infected people.
+
+Particularly, in the scenario where $\gamma = 1$ (being $\beta = 1$), we notice that no epidemic occurs. This happens because individuals recover so fast that the disease fails to propagate effectively. From this, we can infer the necessary condition for the outbreak:
 
 $$\beta > \gamma \iff \frac{\beta}{\gamma} > 1$$
 
-Esto indica que la enfermedad solo se propagará si la **tasa de transmisión** es mayor que la **tasa de recuperación**. A este cociente se le conoce como **Número Reproductivo Básico ($R_0$)**, el cual representa el promedio de nuevas infecciones generadas por un solo individuo infectado durante su periodo contagioso:
+This indicates that the disease will only spread if the transmission rate is greater than the recovery rate. This quotient is known as the Basic Reproductive Number ($R_0$), which represents the average of new infections generated by a single infected individual during their contagious period:
 
 $$R_0 = \frac{\beta}{\gamma}$$
 
-Basándonos en este parámetro, podemos concluir:
-* **Si $R_0 > 1$:** La epidemia crece. Cada individuo infecta, en promedio, a más de una persona, permitiendo la expansión del patógeno.
-* **Si $R_0 = 1$:** La enfermedad se vuelve endémica o estable; cada infectado es reemplazado por otro, sin crecimiento exponencial.
-* **Si $R_0 < 1$:** La epidemia se extingue. Cada persona infecta a menos de un individuo en promedio, causando que el brote decaiga rápidamente.
+Based on this parameter, we can conclude:
+
+Si $R_0 > 1$: The epidemic grows. Each individual infects, on average, more than one person, allowing the pathogen expansion.
+
+Si $R_0 = 1$: The disease becomes endemic or stable; each infected is replaced by another, without exponential growth.
+
+Si $R_0 < 1$: The epidemic extinguishes. Each person infects less than one individual on average, causing the outbreak to decay rapidly.

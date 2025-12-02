@@ -1,76 +1,77 @@
-Reto: Modelo SIR y Vacunación Parte 2
+Challenge: SIR Model and Vaccination Part 2
 ================
 Aldo Resendiz, Aldo Radamés Corral Verdugo, Virginia Díaz Moreno.
-Noviembre de 2025
+November 2025
 
-- [El modelo SIR](#el-modelo-sir)
-- [Gráficos de la evolución del
-  sistema](#gráficos-de-la-evolución-del-sistema)
-- [Pregunta 1](#pregunta-1)
-  - [Análisis de Resultados: Modelo con Dinámica
-    Vital](#análisis-de-resultados-modelo-con-dinámica-vital)
-- [Pregunta 2](#pregunta-2)
-- [Pregunta 3](#pregunta-3)
-- [Pregunta 4](#pregunta-4)
+- [The SIR model](#the-sir-model)
+- [Plots of system evolution](#plots-of-system-evolution)
+- [Question 1](#question-1)
+  - [Analysis of Results: Model with Vital
+    Dynamics](#analysis-of-results-model-with-vital-dynamics)
+- [Question 2](#question-2)
+- [Question 3](#question-3)
+- [Question 4](#question-4)
 
-## El modelo SIR
+``` r
+#install.packages("plotly") # If you dont have it
+library(plotly)
+```
 
-Consideremos un modelo para describir la dinámica de un grupo de
-individuos de una población con exposición a una enfermedad que puede
-contagiarse entre los miembros de la población. Esto puede modelarse
-como un sistema dinámico denominado $`SIR`$ para una población de $`N`$
-individuos en la que se considera la interacción entre un conjunto de
-$`S`$ individuos *suceptibles* de contraer la enfermedad, un conjunto
-$`I`$ de individuos *infectados* y uno conjunto $`R`$ de individuos
-*recuperados* de la enfermedad.
+## The SIR model
 
-Este modelo tiene los siguientes supuestos:
+Let us consider a model to describe the dynamics of a group of
+individuals in a population with exposure to a disease that can be
+spread among the members of the population. This can be modeled as a
+dynamic system called $`SIR`$ for a population of $`N`$ individuals
+where the interaction between a set of $`S`$ susceptible individuals to
+contract the disease, a set $`I`$ of infected individuals, and a set
+$`R`$ of recovered individuals from the disease is considered.
 
-- la probabilidades de infectarse son iguales para todos los individuos
-  de la población;
+This model has the following assumptions:
 
-- la población es homogénea, es decir que los riesgos de infectarse son
-  iguales para toos los suceptibles y que los tiempos para recuperarse
-  son iguales para todos los infectados; y
+the probabilities of getting infected are equal for all individuals in
+the population;
 
-- el tamaño $`N`$ de la población es constante.
+the population is homogeneous, meaning the risks of getting infected are
+equal for all susceptibles and the times to recover are equal for all
+infected; and
 
-El modelo maneja los diferentes conjuntos $`S`$, $`I`$ y $`R`$ como si
-fueran compartimentos bien separados y considera que los individuos
-pueden pasr de uno a otro en el caso de que se enfermen (cambio
-$`S\rightarrow I`$) o que una vez enfermos se recuperen (cambio
-$`I\rightarrow R`$). Ademas, se asume que un individuo no puede pasar
-del conjunto de suceptibles directamente al conjunto de recuperados.
+the population size $`N`$ is constant.
 
-Con estos supuestos y consideraciones, las ecuaciones diferenciales del
-modelo SIR son:
+The model handles the different sets $`S`$, $`I`$, and $`R`$ as if they
+were well-separated compartments and considers that individuals can pass
+from one to another in the event they get sick (change
+$`S\rightarrow I`$) or once sick they recover (change
+$`I\rightarrow R`$). Furthermore, it is assumed that an individual
+cannot pass from the susceptible set directly to the recovered set.
+
+With these assumptions and considerations, the differential equations of
+the SIR model are:
+
 ``` math
-
 \begin{aligned}
 \frac{dS}{dt}&= -\beta \frac{I}{N} S\\
 \frac{dI}{dt}&= \beta\frac{I}{N}S-\gamma I\\\
 \frac{dR}{dt}&= \gamma I
 \end{aligned}
 ```
-donde:
 
-- N=S+R+I
+where:
 
-- la cantidad $`\beta\frac{I}{N}`$ representa la razón con que las
-  personas salen del compartimento S (se infectan);
+N=S+R+I
 
-- en la primera ecuación $`dS`$ representa el cambio debido a las
-  personas que salen del compartimento $`S`$ (el signo negativo se debe
-  a que las personas salen)
+the quantity $`\beta\frac{I}{N}`$ represents the rate at which people
+leave compartment S (get infected);
 
-- en la segunda ecuación $`dI`$ representa el cambio debido a las
-  personas que salen del compartimento $`I`$ (una parte se debe a las
-  personas que del compartimento $`S`$ pasan al compartimento $`I`$, y
-  otra parte se debe a las personas que salen del compartimento $`I`$
-  porque se recuperan);
+in the first equation $`dS`$ represents the change due to people leaving
+compartment $`S`$ (the negative sign is because people are leaving)
 
-- la cantidad $`\gamma`$ representa la razón con que las personas se
-  recuperan.
+in the second equation $`dI`$ represents the change due to people
+entering compartment $`I`$ (a part is due to people passing from
+compartment $`S`$ to compartment $`I`$, and another part is due to
+people leaving compartment $`I`$ because they recover);
+
+the quantity $`\gamma`$ represents the rate at which people recover.
 
 ``` r
 # PACKAGES:
@@ -86,9 +87,9 @@ sir_model <- function(time, state, parameters) {
     with(as.list(c(state, parameters)), {
         N <- S+I+R 
         lambda <- beta * I/N
-        dS <- -lambda * S                
-        dI <- lambda * S - gamma * I   
-        dR <- gamma * I                  
+        dS <- -lambda * S                 
+        dI <- lambda * S - gamma * I    
+        dR <- gamma * I                   
         return(list(c(dS, dI, dR))) 
     })
 }
@@ -99,59 +100,59 @@ output <- as.data.frame(ode(y = initial_state_values,
                             parms = parameters))
 ```
 
-## Gráficos de la evolución del sistema
+## Plots of system evolution
 
 ``` r
-# Gráfico del modelo base
-output_long <- melt(as.data.frame(output), id = "time")                  
+# Base model plot
+output_long <- melt(as.data.frame(output), id = "time")                   
 
 ggplot(data = output_long, aes(x = time, y = value, colour = variable)) +  
-  geom_line(linewidth = 1) +                                           
-  xlab("Tiempo (días)")+                                         
-  ylab("Número de individuos") +                                       
-  labs(title = "Modelo SIR Básico", colour = "Subconjunto") +
+  geom_line(linewidth = 1) +                                    
+  xlab("Time (days)")+                                  
+  ylab("Number of individuals") +                                      
+  labs(title = "Basic SIR Model", colour = "Subset") +
   theme_minimal() +
   theme(legend.position = "bottom")
 ```
 
-![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
 
-Con el modelo SIR se define la constante
+With the SIR model, the constant
 ``` math
 R_0=\frac{\beta}{\gamma}
 ```
-que representa el número de personas que cada contagiado infecta. Para
-que la enfermedad analizada logre dispararse en forma de una epidemia
-debe cumplirse que $`R_0 > 1`$.
+is defined, representing the number of people each infected person
+infects. For the analyzed disease to trigger an epidemic, $`R_0 > 1`$
+must be met.
 
-También se define
+Also defined is
 ``` math
 R_{eff}=R_0\frac{S}{N}
 ```
-que corresponde al número promedio de personas que cada contagiado
-infecta. Este segundo valor $`R_{eff}`$ toma en cuenta de que durante la
-evolución de la pandemia, al aumentar del número de personas inmunes en
-la población cada persona contagiada infectará a un número de personas
-cada vez menor.
+which corresponds to the average number of people each infected person
+infects. This second value $`R_{eff}`$ takes into account that during
+the evolution of the pandemic, as the number of immune people in the
+population increases, each infected person will infect a decreasing
+number of people.
 
-## Pregunta 1
+## Question 1
 
-Haga cambios en el modelo para tomar en cuenta el hecho de que la
-población no es constante:
+Make changes to the model to take into account the fact that the
+population is not constant:
 
-- agregar un término de incremento en $`dS`$ para tomar en cuenta los
-  individuos nacidos $`+bN`$
+add an increment term in $`dS`$ to take into account born individuals
+$`+bN`$
 
-- agregar un término de decremento en $`dS`$ para tomar en cuenta las
-  personas susceptibles que mueren -$`\mu S`$
+add a decrement term in $`dS`$ to take into account susceptible people
+who die -$`\mu S`$
 
-- agregar un término de decremento en $`dI`$ para tomar en cuenta las
-  personas infectadas que mueren -$`\mu I`$
+add a decrement term in $`dI`$ to take into account infected people who
+die -$`\mu I`$
 
-- agregar un término de decremento en $`dR`$ para tomar en cuenta las
-  personas recuperadas que fallecen $`-\mu R`$
+add a decrement term in $`dR`$ to take into account recovered people who
+die $`-\mu R`$
 
-Usar ahora los parámetros
+Now use the parameters
 ``` math
 
 \begin{aligned}
@@ -161,23 +162,23 @@ Usar ahora los parámetros
 b     &=  \frac{1}{70}years^{-1}\\
 \end{aligned}
 ```
-y considerar una duración de 1 año.
+and consider a duration of 1 year.
 
 ``` r
-# Conversión de unidades a días
+# Unit conversion to days
 mu_val <- (1/70)/365
 b_val  <- (1/70)/365
 
 parameters_p1 <- c(beta = 0.4, gamma = 0.2, mu = mu_val, b = b_val)
-times_p1 <- seq(0, 365, by = 1) # 1 año
+times_p1 <- seq(0, 365, by = 1) # 1 year
 
-# Función SIR con dinámica vital
+# SIR function with vital dynamics
 sir_vital_dynamics <- function(time, state, parameters) {
   with(as.list(c(state, parameters)), {
     N <- S + I + R
     lambda <- beta * I / N
     
-    # Ecuaciones modificadas
+    # Modified equations
     dS <- b * N - lambda * S - mu * S
     dI <- lambda * S - gamma * I - mu * I
     dR <- gamma * I - mu * R
@@ -188,230 +189,202 @@ sir_vital_dynamics <- function(time, state, parameters) {
 
 output_p1 <- as.data.frame(ode(y = initial_state_values, times = times_p1, func = sir_vital_dynamics, parms = parameters_p1))
 
-# Gráfico
+# Plot
 ggplot(melt(output_p1, id="time"), aes(x=time, y=value, col=variable)) +
   geom_line(linewidth=1) +
   theme_minimal() +
-  labs(title = "Modelo con Dinámica Vital (1 año)", y="Población")
+  labs(title = "Model with Vital Dynamics (1 year)", y="Population")
 ```
 
-![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
-### Análisis de Resultados: Modelo con Dinámica Vital
+### Analysis of Results: Model with Vital Dynamics
 
-La inclusión de nacimientos ($`b`$) y muertes ($`\mu`$) transforma el
-comportamiento del sistema:
+The inclusion of births ($`b`$) and deaths ($`\mu`$) transforms the
+behavior of the system:
 
-- *Susceptibles ($`S`$):* Tras la caída inicial por el brote, la curva
-  no continúa descendiendo indefinidamente, sino que se estabiliza. Esto
-  ocurre porque los nacimientos ($`+bN`$) reponen constantemente la
-  población susceptible.
-- *Infectados ($`I`$):* Se observa el pico epidémico clásico, pero la
-  curva no cae a cero absoluto. Se mantiene en un nivel bajo y estable,
-  permitiendo que el virus persista en la población (endemia) al tener
-  siempre nuevos huéspedes disponibles.
-- *Recuperados ($`R`$):* Aumentan rápidamente tras el pico de infección
-  y luego se estabilizan, ya que la mortalidad ($`-\mu R`$) equilibra la
-  entrada de nuevos recuperados.
+*Susceptibles* ($`S`$): After the initial drop due to the outbreak, the
+curve does not continue to descend indefinitely, but stabilizes. This
+occurs because births ($`+bN`$) constantly replenish the susceptible
+population.
 
-*Conclusión:* El modelo pasa de ser un sistema cerrado (donde la
-epidemia termina por agotamiento de susceptibles) a un \*sistema
-abierto. Esto permite alcanzar un \*\*equilibrio endémico\*, donde la
-enfermedad coexiste indefinidamente con la población, siendo una
-representación más realista para enfermedades de larga duración
+*Infected* ($`I`$): The classic epidemic peak is observed, but the curve
+does not fall to absolute zero. It stays at a low and stable level,
+allowing the virus to persist in the population (endemic) by always
+having new hosts available.
 
-## Pregunta 2
+*Recovered* ($`R`$): They increase rapidly after the infection peak and
+then stabilize, as mortality ($`-\mu R`$) balances the entry of new
+recovered individuals.
 
-Considerando el modelo SIR básico, haga cambios para tomar en cuenta un
-programa de vacunación. Suponga que una fracción $`v`$ de susceptibles
-se vacuna de manera que queda inmune (y entra ahora directamente en el
-conjunto de los recuperados). Calcule la dinámica de la epidemia en este
-caso usando los parámetros $`\beta=0.4`$, $`\gamma=0.1`$ y considere un
-periodo de 2 años.
+*Conclusion*: The model goes from being a closed system (where the
+epidemic ends due to depletion of susceptibles) to an open system. This
+allows reaching an endemic equilibrium, where the disease coexists
+indefinitely with the population, being a more realistic representation
+for long-lasting diseases.
 
-Su modelo debe ser capaz de mostrar que si la fracción $`v`$ es
-suficiente, no es necesario vacunar a todos los suceptibles para evitar
-la epidemia. A este efecto se le conoce como *inmunidad de rebaño* y se
-refiere a que si un sector grande de la población es inmune, entonces
-los contagios se mantienen a un nivel en el que la enfermedad es
-eliminada.
+## Question 2
 
-¿Cómo se puede calcular la fracción mínima $`v`$ de personas que se
-deben vacunar para poder evitar una epidemia? La inmunidad de rebaño
-ocurre cuando $`R_{eff}< 1`$.
+Considering the basic SIR model, make changes to take into account a
+vaccination program. Assume that a fraction $`v`$ of susceptibles is
+vaccinated so that they become immune (and now enter directly into the
+set of recovered). Calculate the dynamics of the epidemic in this case
+using the parameters $`\beta=0.4`$, $`\gamma=0.1`$ and consider a period
+of 2 years.
 
-*Enfoque del Modelo:* Para modelar un programa de vacunación preventivo
-asumimos que una fracción $`v`$ de la población es inmune desde el día
-0, por lo que los trasladamos directamente del compartimento de
-Susceptibles ($`S`$) al de Recuperados ($`R`$).
+Your model should be able to show that if the fraction $`v`$ is
+sufficient, it is not necessary to vaccinate all susceptibles to avoid
+the epidemic. This effect is known as *herd immunity* and refers to the
+fact that if a large sector of the population is immune, then contagions
+are kept at a level where the disease is eliminated.
 
-*Condiciones Iniciales:* \* $`S_0 = (1 - v)N`$ \* $`I_0 \approx 0`$
-(pequeña cantidad inicial) \* $`R_0 = vN`$ (vacunados)
+How can the minimum fraction $`v`$ of people to be vaccinated be
+calculated to avoid an epidemic? Herd immunity occurs when
+$`R_{eff}< 1`$.
 
-*Cálculo Analítico de la Fracción Mínima ($`v`$):* La inmunidad de
-rebaño se logra cuando el número reproductivo efectivo es menor a 1
-($`R_{eff} < 1`$), lo que impide que el brote crezca exponencialmente.
+*Model Approach*: To model a preventive vaccination program we assume
+that a fraction $`v`$ of the population is immune from day 0, so we move
+them directly from the Susceptible compartment ($`S`$) to Recovered
+($`R`$).
+
+*Initial Conditions*:
+
+$`S_0 = (1 - v)N`$
+
+$`I_0 \approx 0`$ (small initial amount)
+
+$`R_0 = vN`$ (vaccinated)
+
+*Analytical Calculation of the Minimum Fraction ($`v`$)*: Herd immunity
+is achieved when the effective reproductive number is less than 1
+($`R_{eff} < 1`$), which prevents the outbreak from growing
+exponentially.
 
 ``` math
 R_{eff} = R_0 \times \frac{S}{N} < 1
 ```
 
-Sustituyendo $`S = (1-v)N`$ y sabiendo que $`R_0 = \beta / \gamma`$:
+Substituting $`S = (1-v)N`$ and knowing that $`R_0 = \beta / \gamma`$:
 
 ``` math
 \frac{\beta}{\gamma} (1-v) < 1
 ```
 
-Despejando para $`v`$, obtenemos la fórmula del umbral crítico de
-vacunación:
+Solving for $`v`$, we obtain the formula for the critical vaccination
+threshold:
 
 ``` math
 v > 1 - \frac{1}{R_0}
 ```
 
-*Aplicación a los datos del problema:* \* $`\beta = 0.4`$,
-$`\gamma = 0.1 \implies R_0 = 4`$. \* Umbral: $`v > 1 - 1/4 = 0.75`$.
+*Application to the problem data:* \* $`\beta = 0.4`$,
+$`\gamma = 0.1 \implies R_0 = 4`$. \* Threshold: $`v > 1 - 1/4 = 0.75`$.
 
-> *Conclusión:* Se debe vacunar a más del *75%* de la población para
-> evitar la epidemia. En la siguiente simulación utilizamos $`v=0.8`$
-> (80%), por lo que esperamos ver que la infección se suprima
-> inmediatamente.
+> *Conclusion:* More than *75%* of the population must be vaccinated to
+> avoid the epidemic. In the following simulation we use $`v=0.8`$
+> (80%), so we expect to see the infection suppressed immediately.
 
 ``` r
-# 1. Definición de Parámetros
+# 1. Parameter Definition
 beta_val <- 0.4
 gamma_val <- 0.1
 N_total <- 1000000
 v <- 0.50
-# 2. Condiciones Iniciales Modificadas
+# 2. Modified Initial Conditions
 init_vaccine <- c(S = (1 - v) * N_total - 1, 
                   I = 1, 
                   R = v * N_total)
 params_vaccine <- c(beta = beta_val, gamma = gamma_val)
-times_vaccine <- seq(0, 365*2, by = 1) # 2 años
-# 3. Simulación
+times_vaccine <- seq(0, 365*2, by = 1) # 2 years
+# 3. Simulation
 output_vaccine <- as.data.frame(ode(y = init_vaccine, 
                                     times = times_vaccine, 
                                     func = sir_model, 
                                     parms = params_vaccine))
-# 4. Visualización
+# 4. Visualization
 ggplot(melt(output_vaccine, id="time"), aes(x=time, y=value, col=variable)) +
   geom_line(linewidth=1) +
   theme_minimal() +
-  labs(title = paste0("Dinámica con Vacunación del ", v*100, "%"),
-       y = "Población",
-       x = "Tiempo (días)")
-```
-
-![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
-
-``` r
-# 1. Definición de Parámetros
-beta_val <- 0.4
-gamma_val <- 0.1
-N_total <- 1000000
-v <- 0.60
-# 2. Condiciones Iniciales Modificadas
-init_vaccine <- c(S = (1 - v) * N_total - 1, 
-                  I = 1, 
-                  R = v * N_total)
-params_vaccine <- c(beta = beta_val, gamma = gamma_val)
-times_vaccine <- seq(0, 365*2, by = 1) # 2 años
-# 3. Simulación
-output_vaccine <- as.data.frame(ode(y = init_vaccine, 
-                                    times = times_vaccine, 
-                                    func = sir_model, 
-                                    parms = params_vaccine))
-# 4. Visualización
-ggplot(melt(output_vaccine, id="time"), aes(x=time, y=value, col=variable)) +
-  geom_line(linewidth=1) +
-  theme_minimal() +
-  labs(title = paste0("Dinámica con Vacunación del ", v*100, "%"),
-       y = "Población",
-       x = "Tiempo (días)")
+  labs(title = paste0("Dynamics with Vaccination of ", v*100, "%"),
+       y = "Population",
+       x = "Time (days)")
 ```
 
 ![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
 ``` r
-# 1. Definición de Parámetros
+# 1. Parameter Definition
 beta_val <- 0.4
 gamma_val <- 0.1
 N_total <- 1000000
 v <- 0.70
-
-# 2. Condiciones Iniciales Modificadas
+# 2. Modified Initial Conditions
 init_vaccine <- c(S = (1 - v) * N_total - 1, 
                   I = 1, 
                   R = v * N_total)
-
 params_vaccine <- c(beta = beta_val, gamma = gamma_val)
-times_vaccine <- seq(0, 365*2, by = 1) # 2 años
-# 3. Simulación
+times_vaccine <- seq(0, 365*2, by = 1) # 2 years
+# 3. Simulation
 output_vaccine <- as.data.frame(ode(y = init_vaccine, 
                                     times = times_vaccine, 
                                     func = sir_model, 
                                     parms = params_vaccine))
-# 4. Visualización
+# 4. Visualization
 ggplot(melt(output_vaccine, id="time"), aes(x=time, y=value, col=variable)) +
   geom_line(linewidth=1) +
   theme_minimal() +
-  labs(title = paste0("Dinámica con Vacunación del ", v*100, "%"),
-       y = "Población",
-       x = "Tiempo (días)")
+  labs(title = paste0("Dynamics with Vaccination of ", v*100, "%"),
+       y = "Population",
+       x = "Time (days)")
 ```
 
 ![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 ``` r
-# 1. Definición de Parámetros
+# 1. Parameter Definition
 beta_val <- 0.4
 gamma_val <- 0.1
 N_total <- 1000000
-v <- 0.75 
-
-# 2. Condiciones Iniciales Modificadas
-# Removemos el 80% de S y lo ponemos en R
+v <- 0.75
+# 2. Modified Initial Conditions
 init_vaccine <- c(S = (1 - v) * N_total - 1, 
                   I = 1, 
                   R = v * N_total)
 params_vaccine <- c(beta = beta_val, gamma = gamma_val)
-times_vaccine <- seq(0, 365*2, by = 1) # 2 años
-# 3. Simulación
+times_vaccine <- seq(0, 365*2, by = 1) # 2 years
+# 3. Simulation
 output_vaccine <- as.data.frame(ode(y = init_vaccine, 
                                     times = times_vaccine, 
                                     func = sir_model, 
                                     parms = params_vaccine))
-# 4. Visualización
-
+# 4. Visualization
 ggplot(melt(output_vaccine, id="time"), aes(x=time, y=value, col=variable)) +
   geom_line(linewidth=1) +
   theme_minimal() +
-  labs(title = paste0("Dinámica con Vacunación del ", v*100, "%"),
-       y = "Población",
-       x = "Tiempo (días)")
+  labs(title = paste0("Dynamics with Vaccination of ", v*100, "%"),
+       y = "Population",
+       x = "Time (days)")
 ```
 
 ![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
-## Pregunta 3
+## Question 3
 
-Haga cambios en el modelo para tomar en cuenta de que la población no es
-constante:
+Make changes to the model to take into account that the population is
+not constant:
 
-- agregar un término de incremento en $`dS`$ para tomar en cuenta los
-  nacidos $`+bN`$
+add an increment term in $`dS`$ to take into account the born $`+bN`$
 
-- agregar un término de decremento en $`dS`$ para tomar en cuenta las
-  personas susceptibles que mueren -$`\mu S`$
+add a decrement term in $`dS`$ to take into account susceptible people
+who die -$`\mu S`$
 
-- agregar un término de decremento en $`dI`$ para tomar en cuenta las
-  personas infectadas que mueren -$`\mu I`$
+add a decrement term in $`dI`$ to take into account infected people who
+die -$`\mu I`$
 
-- agregar un término de decremento en $`dR`$ para tomar en cuenta las
-  personas recuperadas que fallecen $`-\mu R`$
+add a decrement term in $`dR`$ to take into account recovered people who
+die $`-\mu R`$
 
-Use los parámetros
+Use the parameters
 ``` math
 
 \begin{aligned}
@@ -421,30 +394,30 @@ Use los parámetros
 b     &=  \frac{1}{70}years^{-1}\\
 \end{aligned}
 ```
-y considere una duración de 400 años en sus cálculos.
+and consider a duration of 400 years in your calculations.
 
 ``` r
-# 1. Configuración del Tiempo
-# Usamos un paso de 1 día para mantener la resolución de las oscilaciones,
-# aunque el horizonte sea de 400 años.
+# 1. Time Configuration
+# We use a step of 1 day to maintain the resolution of oscillations,
+# even if the horizon is 400 years.
 times_long <- seq(0, 365*400, by = 1) 
 
-# 2. Simulación
+# 2. Simulation
 
 output_longterm <- as.data.frame(ode(y = initial_state_values, 
                                      times = times_long, 
                                      func = sir_vital_dynamics, 
                                      parms = parameters_p1))
-# 3. Visualización
-# Graficamos dividiendo el tiempo entre 365 para ver el eje X en "Años"
+# 3. Visualization
+# We plot dividing time by 365 to see the X axis in "Years"
 ggplot(melt(output_longterm, id="time"), aes(x=time/365, y=value, col=variable)) +
   geom_line(linewidth=0.8) +
   theme_minimal() +
-  labs(title = "Dinámica SIR con Nacimientos y Muertes (Largo Plazo)", 
-       subtitle = "Convergencia al Equilibrio Endémico",
-       y = "Población",
-       x = "Tiempo (Años)",
-       color = "Grupo")
+  labs(title = "SIR Dynamics with Births and Deaths (Long Term)", 
+       subtitle = "Convergence to Endemic Equilibrium",
+       y = "Population",
+       x = "Time (Years)",
+       color = "Group")
 ```
 
 ![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
@@ -452,22 +425,22 @@ ggplot(melt(output_longterm, id="time"), aes(x=time/365, y=value, col=variable))
 ``` r
 times_long <- seq(0, 365*200, by = 1) 
 
-# 2. Simulación
+# 2. Simulation
 
 output_longterm <- as.data.frame(ode(y = initial_state_values, 
                                      times = times_long, 
                                      func = sir_vital_dynamics, 
                                      parms = parameters_p1))
-# 3. Visualización
-# Graficamos dividiendo el tiempo entre 365 para ver el eje X en "Años"
+# 3. Visualization
+# We plot dividing time by 365 to see the X axis in "Years"
 ggplot(melt(output_longterm, id="time"), aes(x=time/365, y=value, col=variable)) +
   geom_line(linewidth=0.8) +
   theme_minimal() +
-  labs(title = "Dinámica SIR con Nacimientos y Muertes (Largo Plazo)", 
-       subtitle = "Convergencia al Equilibrio Endémico",
-       y = "Población",
-       x = "Tiempo (Años)",
-       color = "Grupo")
+  labs(title = "SIR Dynamics with Births and Deaths (Long Term)", 
+       subtitle = "Convergence to Endemic Equilibrium",
+       y = "Population",
+       x = "Time (Years)",
+       color = "Group")
 ```
 
 ![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
@@ -475,22 +448,22 @@ ggplot(melt(output_longterm, id="time"), aes(x=time/365, y=value, col=variable))
 ``` r
 times_long <- seq(0, 365*100, by = 1) 
 
-# 2. Simulación
+# 2. Simulation
 
 output_longterm <- as.data.frame(ode(y = initial_state_values, 
                                      times = times_long, 
                                      func = sir_vital_dynamics, 
                                      parms = parameters_p1))
-# 3. Visualización
-# Graficamos dividiendo el tiempo entre 365 para ver el eje X en "Años"
+# 3. Visualization
+# We plot dividing time by 365 to see the X axis in "Years"
 ggplot(melt(output_longterm, id="time"), aes(x=time/365, y=value, col=variable)) +
   geom_line(linewidth=0.8) +
   theme_minimal() +
-  labs(title = "Dinámica SIR con Nacimientos y Muertes (Largo Plazo)", 
-       subtitle = "Convergencia al Equilibrio Endémico",
-       y = "Población",
-       x = "Tiempo (Años)",
-       color = "Grupo")
+  labs(title = "SIR Dynamics with Births and Deaths (Long Term)", 
+       subtitle = "Convergence to Endemic Equilibrium",
+       y = "Population",
+       x = "Time (Years)",
+       color = "Group")
 ```
 
 ![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
@@ -498,122 +471,101 @@ ggplot(melt(output_longterm, id="time"), aes(x=time/365, y=value, col=variable))
 ``` r
 times_long <- seq(0, 365*50, by = 1) 
 
-# 2. Simulación
+# 2. Simulation
 
 output_longterm <- as.data.frame(ode(y = initial_state_values, 
                                      times = times_long, 
                                      func = sir_vital_dynamics, 
                                      parms = parameters_p1))
-# 3. Visualización
-# Graficamos dividiendo el tiempo entre 365 para ver el eje X en "Años"
+# 3. Visualization
+# We plot dividing time by 365 to see the X axis in "Years"
 ggplot(melt(output_longterm, id="time"), aes(x=time/365, y=value, col=variable)) +
   geom_line(linewidth=0.8) +
   theme_minimal() +
-  labs(title = "Dinámica SIR con Nacimientos y Muertes (Largo Plazo)", 
-       subtitle = "Convergencia al Equilibrio Endémico",
-       y = "Población",
-       x = "Tiempo (Años)",
-       color = "Grupo")
+  labs(title = "SIR Dynamics with Births and Deaths (Long Term)", 
+       subtitle = "Convergence to Endemic Equilibrium",
+       y = "Population",
+       x = "Time (Years)",
+       color = "Group")
 ```
 
-![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-11-1.png)<!-- --> \###
+Graphic animation 400 years (run locally on your computer)
 
-``` r
-times_long <- seq(0, 365*1, by = 1) 
+## Question 4
 
-# 2. Simulación
+Considering the basic SIR model, make changes to take into account a
+vaccination program. Assume that a fraction $`v`$ of susceptibles is
+vaccinated so that they become immune (and now enter directly into the
+set of recovered), while the fraction $`(1-v)`$ remains susceptible.
 
-output_longterm <- as.data.frame(ode(y = initial_state_values, 
-                                     times = times_long, 
-                                     func = sir_vital_dynamics, 
-                                     parms = parameters_p1))
-# 3. Visualización
-# Graficamos dividiendo el tiempo entre 365 para ver el eje X en "Años"
-ggplot(melt(output_longterm, id="time"), aes(x=time/365, y=value, col=variable)) +
-  geom_line(linewidth=0.8) +
-  theme_minimal() +
-  labs(title = "Dinámica SIR con Nacimientos y Muertes (Largo Plazo)", 
-       subtitle = "Convergencia al Equilibrio Endémico",
-       y = "Población",
-       x = "Tiempo (Años)",
-       color = "Grupo")
-```
+Calculate the dynamics of the epidemic in this case, studying how the
+dynamics change by varying the fraction $`v`$. Use $`\beta=0.6`$,
+$`\gamma=0.1`$ and consider a period of 2 years.
 
-![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+Your model should be able to show that if the fraction $`v`$ is
+sufficient, it is not necessary to vaccinate all susceptibles to avoid
+the epidemic. This effect is known as herd immunity and refers to the
+fact that if a large sector of the population is immune, then contagions
+are kept at a level where the disease is eliminated.
 
-## Pregunta 4
+How can the minimum fraction $`v`$ of people to be vaccinated be
+calculated to avoid an epidemic? Herd immunity occurs when
+$`R_{eff}< 1`$
 
-Considerando el modelo SIR básico, haga cambios para tomar en cuenta un
-programa de vacunación. Suponga que una fracción $`v`$ de susceptibles
-se vacuna de manera que queda inmune (y entra ahora directamente en el
-conjunto de los recuperados), mientras que la fracción $`(1-v)`$ sigue
-siendo susceptible.
+*Analytical Analysis of the Threshold*:
 
-Calcule la dinámica de la epidemia en este caso, estudiando cómo cambia
-la dinámica variando la fracción $`v`$. Utilice $`\beta=0.6`$,
-$`\gamma=0.1`$ y considere un periodo de 2 años.
+In this case, the parameters have changed to $`\beta=0.6`$ and
+$`\gamma=0.1`$. This modifies the basic reproductive number:
 
-Su modelo debe ser capaz de mostrar que si la fracción $`v`$ es
-suficiente, no es necesario vacunar a todos los suceptibles para evitar
-la epidemia. A este efecto se le conoce como *inmunidad de rebaño* y se
-refiere a que si un sector grande de la población es inmune, entonces
-los contagios se mantienen a un nivel en el que la enfermedad es
-eliminada.
-
-¿Cómo se puede calcular la fracción mínima $`v`$ de personas que se
-deben vacunar para poder evitar una epidemia? La inmunidad de rebaño
-ocurre cuando $`R_{eff}< 1`$
-
-*Análisis Analítico del Umbral:*
-
-En este caso, los parámetros han cambiado a $`\beta=0.6`$ y
-$`\gamma=0.1`$. Esto modifica el número reproductivo básico:
 ``` math
 R_0 = \frac{0.6}{0.1} = 6
 ```
 
-Para lograr la inmunidad de rebaño ($`R_{eff} < 1`$), calculamos la
-nueva fracción mínima $`v`$:
+To achieve herd immunity ($`R_{eff} < 1`$), we calculate the new minimum
+fraction $`v`$:
+
 ``` math
 v > 1 - \frac{1}{R_0} = 1 - \frac{1}{6} \approx 0.833
 ```
 
-*Interpretación:* Con estos nuevos parámetros, *es necesario vacunar al
-83.3%* de la población para evitar la epidemia. \* Esto significa que el
-escenario solicitado del *75% no será suficiente* para detener el brote
-completamente (aunque lo reducirá), y necesitaremos un porcentaje mayor
-(ej. 90%) para observar la eliminación total.
+*Interpretation*: With these new parameters, *it is necessary to
+vaccinate 83.3%* of the population to avoid the epidemic.
+
+This means that the requested scenario of *75% will not be sufficient*
+to stop the outbreak completely (although it will reduce it), and *we
+will need a higher percentage 84%* to observe total elimination.
 
 ``` r
-# Definición de parámetros
+# Parameter Definition
 N_total <- 1000000
 params_p4 <- c(beta=0.6, gamma=0.1)
-times_p4 <- seq(0, 365*2, 1) # 2 años
+times_p4 <- seq(0, 365*2, 1) # 2 years
 
-# Escenarios de vacunación: 
-# Agregamos 0.84 y 0.95 para ver el efecto de la inmunidad de rebaño (>83.3%)
+# Vaccination scenarios: 
+# We add 0.84 and 0.95 to see the effect of herd immunity (>83.3%)
 v_scenarios <- c(0, 0.5, 0.75, 0.84, 0.95)
 
 results_list <- list()
 
-# Bucle para simular cada escenario
+# Loop to simulate each scenario
 for(v in v_scenarios){
-  # Condiciones iniciales:
-  # Movemos el porcentaje 'v' directamente a Recuperados
+  # Initial conditions:
+  # We move the percentage 'v' directly to Recovered
   y_init <- c(S = (1-v)*N_total - 1, 
               I = 1, 
               R = v*N_total)
   
-  # Asumiendo que la función 'sir_model' ya está definida en chunks anteriores
+  # Assuming that 'sir_model' function is already defined in previous chunks
   out <- as.data.frame(ode(y=y_init, times=times_p4, func=sir_model, parms=params_p4))
   
-  # Etiquetamos el escenario para la gráfica
+  # Label the scenario for the plot
   out$vacunacion <- factor(paste0(v*100, "%"), 
-                           levels = paste0(v_scenarios*100, "%")) # Ordenar factores
+                           levels = paste0(v_scenarios*100, "%")) # Order factors
   results_list[[length(results_list)+1]] <- out
 }
 
-# Unir todos los datos
+# Bind all data
 all_results <- do.call(rbind, results_list)
 ```
 
@@ -621,36 +573,36 @@ all_results <- do.call(rbind, results_list)
 ggplot(all_results, aes(x=time, y=S, color=vacunacion)) +
   geom_line(linewidth=1) +
   theme_minimal() +
-  labs(title = "Dinámica de Susceptibles",
+  labs(title = "Dynamics of Susceptibles",
        subtitle = "Beta = 0.6, Gamma = 0.1 (R0 = 6)",
-       y = "Población Susceptible",
-       x = "Tiempo (días)",
-       color = "% Vacunado")
+       y = "Susceptible Population",
+       x = "Time (days)",
+       color = "% Vaccinated")
 ```
 
-![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
 
 ``` r
 ggplot(all_results, aes(x=time, y=I, color=vacunacion)) +
   geom_line(linewidth=1) +
   theme_minimal() +
-  labs(title = "Dinámica de Infectados",
-       y = "Infectados Activos",
-       x = "Tiempo (días)",
-       color = "% Vacunado")
+  labs(title = "Dynamics of Infected",
+       y = "Active Infected",
+       x = "Time (days)",
+       color = "% Vaccinated")
 ```
 
-![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
 ``` r
 ggplot(all_results, aes(x=time, y=R, color=vacunacion)) +
   geom_line(linewidth=1) +
   theme_minimal() +
-  labs(title = "Dinámica de Recuperados (Inmunes)",
-       subtitle = "Incluye vacunados iniciales + recuperados naturales",
-       y = "Población Inmune",
-       x = "Tiempo (días)",
-       color = "% Vacunado")
+  labs(title = "Dynamics of Recovered (Immune)",
+       subtitle = "Includes initial vaccinated + natural recovered",
+       y = "Immune Population",
+       x = "Time (days)",
+       color = "% Vaccinated")
 ```
 
-![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](Reto_Parte_2_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
