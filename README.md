@@ -110,6 +110,7 @@ install.packages(c("deSolve", "ggplot2", "reshape2", "plotly"))
 pip install numpy pandas plotly
 
 **Authors**
+
 Aldo Resendiz Cravioto
 
 Aldo Radamés Corral Verdugo
