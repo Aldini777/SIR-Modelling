@@ -1,48 +1,120 @@
-#  Simulación de la Evolución de Contagios (Modelo SIR)
+#  SIR Modeling & Agent-Based Simulation Challenge
 
-> **Materia:** Sistemas de Ecuaciones Diferenciales  
-> **Autor:** Aldo Resendiz  
-> **Herramientas:** R, RStudio / VS Code
+This repository contains a comprehensive analysis of epidemic dynamics, ranging from mathematical modeling using Differential Equations (**R**) to stochastic Agent-Based Simulations (**Python**).
 
----
-
-##  Introducción
-
-Este repositorio contiene el desarrollo del Reto final para la materia de **Sistemas de Ecuaciones Diferenciales**. El objetivo principal es la modelación matemática y computacional de fenómenos epidemiológicos para entender cómo se propagan las enfermedades en poblaciones controladas.
-
-##  Evolución de Contagios
-
-En el reto de este bloque, consideraremos el fenómeno de evolución de contagios de una enfermedad en un sistema poblacional cerrado, donde las posiciones y movimientos de los individuos tienen una naturaleza aleatoria. 
-
-Este tipo de modelos, llamados **SIR** (Susceptibles - Infectados - Recuperados), pueden servir para:
-* Pronosticar las curvas de contagios de una enfermedad.
-* Tomar medidas para corregir la evolución de manera que se tengan condiciones adecuadas.
-
-Es precisamente en estos tiempos de pandemia en los que la utilidad de este tipo de modelos se vuelve relevante a nivel global.
-
-### Enfoque del Proyecto
-Los contenidos de los módulos referentes a las consideraciones numéricas y teóricas deberán ser utilizadas y complementadas con consideraciones de **tipo estocástico** para determinar la dinámica de contagios en un ambiente controlado.
-
-La situación a considerar incluye un grupo de población de una especie que es afectada por una enfermedad infecciosa y cuyo comportamiento dinámico de movimiento no puede ser conocido con antelación, puesto que cada individuo puede moverse siguiendo algunas reglas básicas de movimientos posibles.
-
-Con esta dinámica desconocida, será necesario plantear y resolver un **sistema de ecuaciones diferenciales** para describir a los:
-1. Individuos **Enfermos**.
-2. Individuos **Susceptibles** de contraer la enfermedad.
-3. Individuos **Recuperados** o removidos de la dinámica contagiosa.
+The project is divided into 4 phases, exploring the behavior of infectious diseases under different scenarios such as vaccination, vital dynamics, and spatial distribution.
 
 ---
 
-##  Etapas del Proyecto
+##  Important: How to View Graphs and Animations
 
-Con el fin de generar una solución de complejidad creciente, este proyecto se divide en cuatro etapas fundamentales:
+To properly visualize all the interactive graphs and animations in this project, please follow these instructions:
 
-1.  **Modelación y simulación básica:** Difusión de enfermedades con el modelo SIR estándar.
-2.  **Refinamiento del modelo:** Modificaciones del modelo SIR para considerar mejoras (dinámica vital, vacunación, etc.).
-3.  **Dinámica Estocástica:** Consideración de la aleatoriedad en la simulación de contagios.
-4.  **Simulación Espacio-Temporal:** Simulación de la dinámica de los contagios considerando el movimiento de los individuos del sistema.
+1.  **Part 1 (R - Basic SIR):**
+    * View `Reto_Parte_1.md` directly here on GitHub.
+    * *(Optional)* Download `Reto_Parte_1.Rmd` and run it locally in RStudio.
+
+2.  **Part 2 (R - Advanced Dynamics):**
+    * View `Reto_Parte_2.md` for the static report and code explanation.
+    * **For animations:** To view the time-lapse evolution (400 years), you must download `Reto_Parte_2.Rmd` and run it locally (Knit to HTML).
+
+3.  **Parts 3 & 4 (Python - Spatial Simulation):**
+    * These parts contain heavy animations using **Plotly**. GitHub cannot render them directly.
+    * **Option A (Recommended):** Open the notebook directly in Google Colab to see the interactive bubbles:
+        [** Open in Google Colab**](https://drive.google.com/file/d/1WC8bTOes5TTtwvk9c8tW8nDnLXNvmGFE/view?usp=sharing)
+    * **Option B:** Download `Reto_Parte_3_y_4.ipynb` and run it locally using Jupyter Notebook or VS Code.
 
 ---
 
-##  Visualización de Resultados
+##  Project Structure
 
-Para ver los gráficos y el análisis del código renderizado directamente en GitHub, por favor abre los archivos con extensión `.md` (por ejemplo, `Reto.md`) en este repositorio.
+```text
+SIR-Modelling/
+├── Reto_Parte_1.md          # Static report for Phase 1
+├── Reto_Parte_1.Rmd         # Source code (R) for Phase 1
+├── Reto_Parte_2.md          # Static report for Phase 2
+├── Reto_Parte_2.Rmd         # Source code (R) for Phase 2 (Includes Animations)
+├── Reto_Parte_3_y_4.ipynb   # Python Notebook with Agent-Based Simulations
+├── simulacion_ciudad.html   # Interactive HTML export of the simulation
+└── README.md                # This file
+```
+**Phase 1: The Basic SIR Model (R)**
+In this phase, we implemented the classic SIR (Susceptible-Infected-Recovered) model using Ordinary Differential Equations (ODEs).
+
+Key Concepts:
+
+$$R_0$$ (Basic Reproduction Number): Calculated as β/γ.
+
+Threshold Theorem: Analytical derivation of the maximum number of infected individuals.
+
+*S(t) Analysis*: Analytical approximation for the time required for Susceptibles to drop to half (N/2).
+
+**Phase 2: Vital Dynamics & Vaccination (R)**
+We expanded the model to include demographic factors and public health interventions.
+
+1. Vital Dynamics (Births & Deaths)
+We modified the differential equations to include birth (b) and death (μ) rates.
+
+Short term (400 days): The epidemic behaves similarly to the standard SIR.
+
+Long term (400 years): The model shows damped oscillations converging to an Endemic Equilibrium.
+
+2. Vaccination Strategy
+We analyzed the concept of Herd Immunity.
+*Simulation*: We proved that vaccinating 80% of the population (when the threshold was 75%) successfully prevents an outbreak.
+
+**Phase 3 & 4:** Agent-Based Simulation (Python)
+Moving away from differential equations, we built a stochastic simulation where each individual is an autonomous agent moving in a 2D space.
+
+Technologies: Python, NumPy, Pandas, Plotly Express.
+
+**Scenarios Simulated:**
+Square City:
+
+Random movement with normal distribution.
+
+Boundaries using "hard walls" logic.
+
+Infection based on proximity radius (r).
+
+Circular City:
+
+Uniform distribution within a circle 
+
+Movement constrained within radius D/2.
+
+Cluster Distribution:
+
+Simulates a "hotspot" (e.g., a concert or city center).
+
+Agents are initialized using a Gaussian distribution around a random center.
+
+Result: Extremely fast initial infection rates due to high local density.
+
+Comparison of Variants:
+We ran simulations comparing 4 scenarios for each geometry:
+
+Base Case: Standard parameters.
+
+High Density: Double population (N=600).
+
+Social Distancing: Reduced infection radius (r=3.0).
+
+Fast Recovery: Increased recovery rate (γ=0.2).
+
+**Requirements**
+To run the code locally, you need:
+
+**For R:**
+install.packages(c("deSolve", "ggplot2", "reshape2", "plotly"))
+**For Python:**
+pip install numpy pandas plotly
+
+**Authors**
+Aldo Resendiz Cravioto
+
+Aldo Radamés Corral Verdugo
+
+Virginia Díaz Moreno
+
+November 2025
