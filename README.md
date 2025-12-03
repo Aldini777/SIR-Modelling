@@ -35,7 +35,6 @@ SIR-Modelling/
 ├── Reto_Parte_2.md          # Static report for Phase 2
 ├── Reto_Parte_2.Rmd         # Source code (R) for Phase 2 (Includes Animations)
 ├── Reto_Parte_3_y_4.ipynb   # Python Notebook with Agent-Based Simulations
-├── simulacion_ciudad.html   # Interactive HTML export of the simulation
 └── README.md                # This file
 ```
 **Phase 1: The Basic SIR Model (R)**
